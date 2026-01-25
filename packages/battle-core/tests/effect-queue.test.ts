@@ -44,6 +44,7 @@ describe('EffectQueue (B1)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // カスタムの applyEffect: APPLY_DAMAGE の後に derivedEffects で HEAL を返す
@@ -132,6 +133,7 @@ describe('EffectQueue (B1)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // 初期Effect: 2つのダメージ
@@ -203,6 +205,7 @@ describe('EffectQueue (B1)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // 処理順序を記録
@@ -285,6 +288,7 @@ describe('EffectQueue (B1)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // カスタムの applyEffect: 最初のダメージだけ derivedEffects で2つ目のダメージを返す

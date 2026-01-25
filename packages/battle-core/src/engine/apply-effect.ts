@@ -67,8 +67,9 @@ export function applyEffect(pokemon: Pokemon, effect: Effect, state: BattleState
         break;
       }
 
-      // 対象決定（最小実装: 単体1体、相手固定）
-      // PokemonId 0 の相手は 1、1 の相手は 0
+      // 対象決定（最小実装: 2体戦のみ対応、単体1体、相手固定）
+      // TODO: 将来的には move.target と場の状況から対象を決定
+      // 制約: PokemonId は 0 と 1 のみを想定
       const targetId = effect.pokemon === 0 ? 1 : 0;
       const defender = state.pokemon[targetId];
 
