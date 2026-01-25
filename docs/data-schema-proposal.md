@@ -25,6 +25,12 @@
 - ダミーデータの例を示す
 - 実装フェーズを明確化（最小セット vs 拡張）
 
+### 重要な世代固有仕様
+
+- **第4世代はタイプ17種類**（フェアリーは第6世代導入）
+- **隠れ特性なし**（第5世代導入）
+- **物理/特殊は技ごとに固定**（タイプ依存ではない）
+
 ---
 
 ## 1. 性格（Nature）
@@ -145,6 +151,13 @@ interface Nature {
       "enum": ["single", "self", "allOpponents", "allAllies", "all", "randomOpponent", "allExceptSelf"]
     },
     "makesContact": { "type": "boolean" },
+    "roleTags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["STAB_MAIN", "STAB_SUB", "COVERAGE", "PRIORITY", "BOOST", "STATUS", "SUPPORT", "HAZARD", "HEAL", "PIVOT"]
+      }
+    },
     "secondaryEffect": {
       "type": ["object", "null"],
       "properties": {
@@ -197,6 +210,7 @@ interface Move {
   pp: number;
   target: MoveTarget;
   makesContact: boolean;
+  roleTags?: string[];  // Generative Particle用の役割タグ（STAB_MAIN, COVERAGE等）
   secondaryEffect?: SecondaryEffect;
   flags?: {
     protect?: boolean;  // まもる/みきりで防げるか
@@ -221,6 +235,7 @@ interface Move {
     "pp": 15,
     "target": "single",
     "makesContact": false,
+    "roleTags": ["STAB_MAIN"],
     "secondaryEffect": {
       "type": "status",
       "status": "paralysis",
@@ -242,6 +257,7 @@ interface Move {
     "pp": 10,
     "target": "allExceptSelf",
     "makesContact": false,
+    "roleTags": ["STAB_MAIN"],
     "flags": {
       "protect": true
     }
@@ -257,6 +273,7 @@ interface Move {
     "pp": 30,
     "target": "single",
     "makesContact": true,
+    "roleTags": ["PRIORITY"],
     "flags": {
       "protect": true
     }
@@ -272,6 +289,7 @@ interface Move {
     "pp": 5,
     "target": "all",
     "makesContact": false,
+    "roleTags": ["SUPPORT"],
     "flags": {
       "mirror": true
     }
@@ -698,6 +716,8 @@ interface Species {
   - 第4世代の代表的なポケモン（ガブリアス、ラティオス、メタグロス等）
   - タイプ・能力値のバリエーション確保
 - **架空データでも可**（初期検証用）
+- **第4世代では隠れ特性なし**（第5世代導入）
+  - abilities配列は通常1〜2個
 
 ---
 
@@ -705,7 +725,8 @@ interface Species {
 
 ### 概要
 
-- 18タイプ × 18タイプの2次元配列
+- **第4世代は17タイプ**（フェアリーは第6世代導入）
+- 17タイプ × 17タイプの2次元配列
 - 値: 0（無効）, 0.5（いまひとつ）, 1（等倍）, 2（効果抜群）
 
 ### スキーマ定義
@@ -760,8 +781,9 @@ interface TypeChart {
 
 ### 実装の考慮点
 
-- **完全定義必須**（18x18の324要素）
-- バリデーション: 行列のサイズ一致確認
+- **完全定義必須**（17x17の289要素）
+- バリデーション: 行列のサイズ一致確認（types.length === 17, chart.length === 17, chart[i].length === 17）
+- 第4世代にフェアリータイプは存在しない
 
 ---
 
@@ -772,7 +794,7 @@ interface TypeChart {
 | データ種別 | 件数 | 備考 |
 |----------|------|------|
 | Nature | 25種類（全て） | 固定的なので全定義 |
-| Type Chart | 18x18 | 固定的なので全定義 |
+| Type Chart | 17x17 | 固定的なので全定義（第4世代はフェアリーなし） |
 | Species | 10種族 | 代表的なポケモン or 架空 |
 | Move | 30技 | 物理/特殊/状態異常/優先度のバリエーション |
 | Item | 10種類 | たべのこし、スカーフ、タスキ等 |
@@ -792,6 +814,87 @@ interface TypeChart {
 
 ---
 
+## 7.5. 条件式（Condition）の最小DSL
+
+### 目的
+
+Item/Ability の `condition` フィールドを文字列で記述する場合、解釈ブレを防ぐため**許可文法を固定**する。
+
+### 許可される条件式
+
+Phase 1 では以下の形式のみを許可：
+
+```
+<variable> <operator> <value>
+```
+
+#### 変数（Variable）
+
+| 変数 | 意味 | 型 |
+|------|------|-----|
+| `hp_ratio` | 現在HP / 最大HP | number (0.0〜1.0) |
+| `hp_percent` | 現在HP / 最大HP * 100 | number (0〜100) |
+| `status` | 状態異常 | string |
+| `weather` | 天候 | string |
+| `would_faint` | 致死ダメージか | boolean |
+
+#### 演算子（Operator）
+
+| 演算子 | 意味 |
+|--------|------|
+| `<=` | 以下 |
+| `<` | 未満 |
+| `>=` | 以上 |
+| `>` | より大きい |
+| `==` | 等しい |
+| `!=` | 等しくない |
+| `in` | 含まれる（配列） |
+
+#### 値（Value）
+
+- 数値: `0.5`, `25`, `100`
+- 文字列: `"poison"`, `"rain"`
+- 真偽値: `true`, `false`
+- 配列: `["poison", "badlyPoisoned"]`
+
+### 例
+
+```json
+{
+  "condition": "hp_ratio <= 0.5"
+}
+```
+
+```json
+{
+  "condition": "status in [\"poison\", \"badlyPoisoned\"]"
+}
+```
+
+```json
+{
+  "condition": "weather == \"rain\""
+}
+```
+
+```json
+{
+  "condition": "hp_percent == 100 && would_faint == true"
+}
+```
+
+### Phase 2 での拡張
+
+- 論理演算子: `&&`, `||`, `!`
+- 関数: `has_stat_boost(stat)`, `is_grounded()`等
+
+### バリデーション
+
+- condition のパース可能性をテスト
+- 実行時エラーを避けるため、スキーマ段階で検証
+
+---
+
 ## 8. ディレクトリ構造（提案）
 
 ```
@@ -805,7 +908,7 @@ packages/data/
 │   └── type-chart.schema.json
 ├── examples/
 │   ├── natures.json          # 25種類（全定義）
-│   ├── type-chart.json        # 18x18（全定義）
+│   ├── type-chart.json        # 17x17（全定義）
 │   ├── species.json           # 10種族（ダミー）
 │   ├── moves.json             # 30技（ダミー）
 │   ├── items.json             # 10種類（ダミー）
