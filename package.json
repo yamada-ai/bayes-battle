@@ -1,0 +1,34 @@
+{
+  "name": "bayes-battle",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ポケモン第4世代風 対戦AI：Generative Particle Belief + Latent Action PPO",
+  "keywords": [
+    "pokemon",
+    "reinforcement-learning",
+    "pomdp",
+    "particle-filter",
+    "ppo"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./packages/**\" dev",
+    "build": "pnpm --recursive --filter \"./packages/**\" build",
+    "test": "pnpm --recursive --filter \"./packages/**\" test",
+    "lint": "pnpm --recursive --filter \"./packages/**\" lint",
+    "format": "pnpm --recursive --filter \"./packages/**\" format",
+    "clean": "pnpm --recursive --filter \"./packages/**\" clean"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
+  }
+}
