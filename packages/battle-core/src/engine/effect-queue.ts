@@ -4,6 +4,7 @@ import type { PublicEvent, RngEvent } from '../types/event';
 import type { ApplyResult } from '../types/apply-result';
 import type { Pokemon } from '../types/state';
 import { applyEffect } from './apply-effect';
+import { evaluateTrigger, TriggerGuard } from './trigger-system';
 
 /**
  * runQueue実行結果
@@ -24,6 +25,8 @@ function getEffectTarget(effect: Effect): PokemonId {
       return effect.pokemon;
     case EffectType.SET_STATUS:
       return effect.pokemon;
+    case EffectType.CONSUME_ITEM:
+      return effect.pokemon;
     default: {
       // 網羅性チェック: 新しいEffect型を追加したらコンパイルエラーになる
       const _exhaustive: never = effect;
@@ -33,11 +36,11 @@ function getEffectTarget(effect: Effect): PokemonId {
 }
 
 /**
- * EffectQueueを実行（2段キュー）
+ * EffectQueueを実行（2段キュー + TriggerSystem）
  *
  * - immediate: 優先度高（derivedEffects はここに積まれる）
  * - deferred: 優先度低（今回は未使用）
- * - triggerRequests は今回無視（B2で実装）
+ * - triggerRequests: TriggerSystem で評価して Effect に変換
  *
  * @param initialEffects 初期Effect配列
  * @param state バトル状態
@@ -54,6 +57,8 @@ export function runQueue(
 
   const allEvents: PublicEvent[] = [];
   const allRngEvents: RngEvent[] = [];
+
+  const triggerGuard = new TriggerGuard();
 
   while (immediateQueue.length > 0 || deferredQueue.length > 0) {
     // immediate優先で取り出し
@@ -74,11 +79,21 @@ export function runQueue(
     allEvents.push(...result.events);
     allRngEvents.push(...result.rngEvents);
 
-    // derivedEffectsをimmediateキューの先頭に追加（優先度高）
+    // derivedEffectsをimmediateキューの先頭に追加（最優先）
     // unshiftで先頭に追加することで、残りの初期Effectより先に処理される
     immediateQueue.unshift(...result.derivedEffects);
 
-    // triggerRequestsは今回無視（B2で実装予定）
+    // triggerRequestsを処理
+    for (const triggerRequest of result.triggerRequests) {
+      const triggerResult = evaluateTrigger(triggerRequest, state, triggerGuard);
+
+      // Triggerから生成されたイベントを収集
+      allEvents.push(...triggerResult.events);
+
+      // Triggerから生成されたEffectをimmediateキューの末尾に追加
+      // pushで末尾に追加することで、derivedEffectsより後に処理される
+      immediateQueue.push(...triggerResult.effects);
+    }
   }
 
   return { events: allEvents, rngEvents: allRngEvents };

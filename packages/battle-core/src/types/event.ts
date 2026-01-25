@@ -6,6 +6,8 @@ export const PublicEventType = {
   HEALED: 'HEALED',
   STATUS_INFLICTED: 'STATUS_INFLICTED',
   FAINTED: 'FAINTED',
+  ITEM_ACTIVATED: 'ITEM_ACTIVATED',
+  ITEM_CONSUMED: 'ITEM_CONSUMED',
 } as const;
 
 export type PublicEventType = (typeof PublicEventType)[keyof typeof PublicEventType];
@@ -46,6 +48,18 @@ export type PublicEvent =
   | {
       type: typeof PublicEventType.FAINTED;
       pokemon: PokemonId;
+    }
+
+  // === アイテム ===
+  | {
+      type: typeof PublicEventType.ITEM_ACTIVATED;
+      pokemon: PokemonId;
+      item: string; // アイテムID
+    }
+  | {
+      type: typeof PublicEventType.ITEM_CONSUMED;
+      pokemon: PokemonId;
+      item: string; // 消費されたアイテムID
     };
 
 /**

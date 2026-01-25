@@ -6,6 +6,7 @@ export const EffectType = {
   APPLY_DAMAGE: 'APPLY_DAMAGE',
   HEAL: 'HEAL',
   SET_STATUS: 'SET_STATUS',
+  CONSUME_ITEM: 'CONSUME_ITEM',
 } as const;
 
 export type EffectType = (typeof EffectType)[keyof typeof EffectType];
@@ -19,7 +20,8 @@ export type Effect =
   // === State変更系 ===
   | { type: typeof EffectType.APPLY_DAMAGE; id: string; target: PokemonId; amount: number }
   | { type: typeof EffectType.HEAL; id: string; pokemon: PokemonId; amount: number }
-  | { type: typeof EffectType.SET_STATUS; id: string; pokemon: PokemonId; status: StatusCondition };
+  | { type: typeof EffectType.SET_STATUS; id: string; pokemon: PokemonId; status: StatusCondition }
+  | { type: typeof EffectType.CONSUME_ITEM; id: string; pokemon: PokemonId; item: string };
 
 // 将来の拡張用（コメントアウト）
 // | { type: 'SET_HP'; id: string; pokemon: PokemonId; hp: number }
