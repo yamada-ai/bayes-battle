@@ -52,7 +52,7 @@ function getEffectTarget(effect: Effect): PokemonId {
 export function runQueue(
   initialEffects: Effect[],
   state: BattleState,
-  applyEffectFn: (pokemon: Pokemon, effect: Effect) => ApplyResult = applyEffect
+  applyEffectFn: (pokemon: Pokemon, effect: Effect, state: BattleState) => ApplyResult = applyEffect
 ): RunQueueResult {
   const immediateQueue: Effect[] = [...initialEffects];
   const deferredQueue: Effect[] = [];
@@ -75,7 +75,7 @@ export function runQueue(
     }
 
     // applyEffectを実行
-    const result = applyEffectFn(pokemon, effect);
+    const result = applyEffectFn(pokemon, effect, state);
 
     // イベントを収集
     allEvents.push(...result.events);

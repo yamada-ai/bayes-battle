@@ -3,9 +3,11 @@ import { applyEffect } from '../src/engine/apply-effect';
 import type { Pokemon } from '../src/types/state';
 import { EffectType, type Effect } from '../src/types/effect';
 import { PublicEventType } from '../src/types/event';
+import type { BattleState } from '../src/types/battle-state';
 
 describe('applyEffect (Core Architecture)', () => {
   let pokemon: Pokemon;
+  let state: BattleState;
 
   beforeEach(() => {
     // テスト用ポケモン
@@ -38,6 +40,14 @@ describe('applyEffect (Core Architecture)', () => {
       item: null,
       moves: [],
     };
+
+    // ダミーの state
+    state = {
+      pokemon: {
+        0: pokemon,
+      },
+      turnNumber: 0,
+    };
   });
 
   describe('Test 1: APPLY_DAMAGE returns DAMAGE_DEALT', () => {
@@ -49,7 +59,7 @@ describe('applyEffect (Core Architecture)', () => {
         amount: 60,
       };
 
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       // State更新を確認
       expect(pokemon.hp).toBe(40);
@@ -83,7 +93,7 @@ describe('applyEffect (Core Architecture)', () => {
         amount: 100, // 過剰
       };
 
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       // State更新（0で止まる）
       expect(pokemon.hp).toBe(0);
@@ -108,7 +118,7 @@ describe('applyEffect (Core Architecture)', () => {
         amount: 30,
       };
 
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       // Eventは2つ（DAMAGE_DEALT + FAINTED）
       expect(result.events).toHaveLength(2);
@@ -134,7 +144,7 @@ describe('applyEffect (Core Architecture)', () => {
         amount: 30, // 過剰
       };
 
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       // State更新（上限でクリップ）
       expect(pokemon.hp).toBe(100);
@@ -159,7 +169,7 @@ describe('applyEffect (Core Architecture)', () => {
         amount: 30,
       };
 
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       expect(pokemon.hp).toBe(80);
 
@@ -183,7 +193,7 @@ describe('applyEffect (Core Architecture)', () => {
         status: 'burn',
       };
 
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       // Stateは変わらない
       expect(pokemon.status).toBe('burn');
@@ -200,7 +210,7 @@ describe('applyEffect (Core Architecture)', () => {
         status: 'burn',
       };
 
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       // State更新
       expect(pokemon.status).toBe('burn');
