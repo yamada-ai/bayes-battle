@@ -24,6 +24,11 @@ function getEffectTarget(effect: Effect): PokemonId {
       return effect.pokemon;
     case 'SET_STATUS':
       return effect.pokemon;
+    default: {
+      // 網羅性チェック: 新しいEffect型を追加したらコンパイルエラーになる
+      const _exhaustive: never = effect;
+      throw new Error(`Unknown effect type: ${(_exhaustive as Effect).type}`);
+    }
   }
 }
 
@@ -69,8 +74,9 @@ export function runQueue(
     allEvents.push(...result.events);
     allRngEvents.push(...result.rngEvents);
 
-    // derivedEffectsをimmediateキューに追加
-    immediateQueue.push(...result.derivedEffects);
+    // derivedEffectsをimmediateキューの先頭に追加（優先度高）
+    // unshiftで先頭に追加することで、残りの初期Effectより先に処理される
+    immediateQueue.unshift(...result.derivedEffects);
 
     // triggerRequestsは今回無視（B2で実装予定）
   }

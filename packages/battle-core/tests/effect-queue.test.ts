@@ -166,6 +166,88 @@ describe('EffectQueue (B1)', () => {
     });
   });
 
+  it('derivedEffects が残りの初期Effectsより先に処理される', () => {
+    // テスト用のポケモン
+    const pokemon: Pokemon = {
+      id: 0,
+      speciesId: 'test',
+      level: 50,
+      hp: 100,
+      maxHP: 100,
+      status: null,
+      stats: {
+        hp: 100,
+        attack: 100,
+        defense: 100,
+        spAttack: 100,
+        spDefense: 100,
+        speed: 100,
+      },
+      statStages: {
+        attack: 0,
+        defense: 0,
+        spAttack: 0,
+        spDefense: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0,
+      },
+      types: ['normal'],
+      ability: 'test',
+      item: null,
+      moves: [],
+    };
+
+    const state: BattleState = {
+      pokemon: {
+        0: pokemon,
+      },
+    };
+
+    // 処理順序を記録
+    const processOrder: string[] = [];
+
+    // カスタムの applyEffect: damage-1 のみ derivedEffects で heal-1 を返す
+    const customApplyEffect = (pokemon: Pokemon, effect: Effect): ApplyResult => {
+      processOrder.push(effect.id);
+      const result = applyEffect(pokemon, effect);
+
+      if (effect.id === 'damage-1') {
+        result.derivedEffects.push({
+          type: 'HEAL',
+          id: 'heal-1',
+          pokemon: 0,
+          amount: 10,
+        });
+      }
+
+      return result;
+    };
+
+    // 初期Effect: damage-1, damage-2
+    const initialEffects: Effect[] = [
+      {
+        type: 'APPLY_DAMAGE',
+        id: 'damage-1',
+        target: 0,
+        amount: 20,
+      },
+      {
+        type: 'APPLY_DAMAGE',
+        id: 'damage-2',
+        target: 0,
+        amount: 10,
+      },
+    ];
+
+    // runQueue を実行
+    runQueue(initialEffects, state, customApplyEffect);
+
+    // 処理順序を確認: damage-1 → heal-1 → damage-2
+    // derivedEffects (heal-1) が残りの初期Effect (damage-2) より先に処理される
+    expect(processOrder).toEqual(['damage-1', 'heal-1', 'damage-2']);
+  });
+
   it('複数の derivedEffects が連鎖的に処理される', () => {
     // テスト用のポケモン
     const pokemon: Pokemon = {
