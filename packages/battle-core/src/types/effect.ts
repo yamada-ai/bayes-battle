@@ -3,6 +3,7 @@ import type { StatusCondition } from './state';
 export type PokemonId = number;
 
 export const EffectType = {
+  USE_MOVE: 'USE_MOVE',
   APPLY_DAMAGE: 'APPLY_DAMAGE',
   HEAL: 'HEAL',
   SET_STATUS: 'SET_STATUS',
@@ -17,6 +18,9 @@ export type EffectType = (typeof EffectType)[keyof typeof EffectType];
  * 重要: 各Effectには id を付与する（TriggerGuard用）
  */
 export type Effect =
+  // === 行動系 ===
+  | { type: typeof EffectType.USE_MOVE; id: string; pokemon: PokemonId; moveId: string }
+
   // === State変更系 ===
   | { type: typeof EffectType.APPLY_DAMAGE; id: string; target: PokemonId; amount: number }
   | { type: typeof EffectType.HEAL; id: string; pokemon: PokemonId; amount: number }

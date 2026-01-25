@@ -19,8 +19,23 @@ import { PublicEventType, type PublicEvent } from '../types/event';
 export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
   const events: PublicEvent[] = [];
   const triggerRequests: ApplyResult['triggerRequests'] = [];
+  const derivedEffects: Effect[] = [];
 
   switch (effect.type) {
+    case EffectType.USE_MOVE: {
+      // USE_MOVE イベント
+      events.push({
+        type: PublicEventType.USE_MOVE,
+        pokemon: effect.pokemon,
+        moveId: effect.moveId,
+      });
+
+      // TODO: 実際の技効果処理（B3最小実装では省略）
+      // 今は USE_MOVE イベントを出すだけ
+
+      break;
+    }
+
     case EffectType.APPLY_DAMAGE: {
       const oldHP = pokemon.hp;
       const actualDamage = Math.min(effect.amount, oldHP); // 過剰ダメージは切る
@@ -131,6 +146,6 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
     events,
     rngEvents: [],
     triggerRequests,
-    derivedEffects: [],
+    derivedEffects,
   };
 }
