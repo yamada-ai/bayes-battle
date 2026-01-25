@@ -38,6 +38,7 @@ function turnStart(state: BattleState): PublicEvent[] {
  * Phase 2: 行動実行
  *
  * - TurnPlan から USE_MOVE Effect を生成
+ * - 瀕死ポケモンはスキップ
  * - runQueue で実行
  */
 function executeActions(turnPlan: TurnPlan, state: BattleState): PublicEvent[] {
@@ -45,6 +46,13 @@ function executeActions(turnPlan: TurnPlan, state: BattleState): PublicEvent[] {
 
   // TurnPlan から USE_MOVE Effect を生成
   for (const action of turnPlan.actions) {
+    const pokemon = state.pokemon[action.pokemon];
+
+    // 瀕死ポケモンはスキップ
+    if (!pokemon || pokemon.hp === 0) {
+      continue;
+    }
+
     if (action.type === 'USE_MOVE') {
       effects.push({
         type: EffectType.USE_MOVE,
@@ -52,8 +60,10 @@ function executeActions(turnPlan: TurnPlan, state: BattleState): PublicEvent[] {
         pokemon: action.pokemon,
         moveId: action.moveId,
       });
+    } else if (action.type === 'SWITCH') {
+      // SWITCH は未実装
+      throw new Error('SWITCH action is not implemented yet');
     }
-    // SWITCH は今回未実装
   }
 
   // runQueue で実行

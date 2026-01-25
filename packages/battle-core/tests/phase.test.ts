@@ -179,4 +179,138 @@ describe('Phase (B3)', () => {
     executeTurn(turnPlan, state);
     expect(state.turnNumber).toBe(3);
   });
+
+  it('瀕死ポケモンは行動をスキップする', () => {
+    const pokemon1: Pokemon = {
+      id: 0,
+      speciesId: 'test1',
+      level: 50,
+      hp: 0, // 瀕死
+      maxHP: 100,
+      status: null,
+      stats: {
+        hp: 100,
+        attack: 100,
+        defense: 100,
+        spAttack: 100,
+        spDefense: 100,
+        speed: 100,
+      },
+      statStages: {
+        attack: 0,
+        defense: 0,
+        spAttack: 0,
+        spDefense: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0,
+      },
+      types: ['normal'],
+      ability: 'test',
+      item: null,
+      moves: ['tackle'],
+    };
+
+    const pokemon2: Pokemon = {
+      id: 1,
+      speciesId: 'test2',
+      level: 50,
+      hp: 100, // 生存
+      maxHP: 100,
+      status: null,
+      stats: {
+        hp: 100,
+        attack: 100,
+        defense: 100,
+        spAttack: 100,
+        spDefense: 100,
+        speed: 100,
+      },
+      statStages: {
+        attack: 0,
+        defense: 0,
+        spAttack: 0,
+        spDefense: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0,
+      },
+      types: ['normal'],
+      ability: 'test',
+      item: null,
+      moves: ['tackle'],
+    };
+
+    const state: BattleState = {
+      pokemon: {
+        0: pokemon1,
+        1: pokemon2,
+      },
+      turnNumber: 0,
+    };
+
+    const turnPlan: TurnPlan = {
+      actions: [
+        { type: 'USE_MOVE', pokemon: 0, moveId: 'tackle' }, // 瀕死
+        { type: 'USE_MOVE', pokemon: 1, moveId: 'tackle' }, // 生存
+      ],
+    };
+
+    const result = executeTurn(turnPlan, state);
+
+    // USE_MOVEイベントは1つだけ（瀕死のポケモン0はスキップ）
+    const useMoveEvents = result.events.filter((e) => e.type === PublicEventType.USE_MOVE);
+    expect(useMoveEvents).toHaveLength(1);
+    expect(useMoveEvents[0]).toMatchObject({
+      type: PublicEventType.USE_MOVE,
+      pokemon: 1,
+      moveId: 'tackle',
+    });
+  });
+
+  it('SWITCHアクションは未実装エラーを出す', () => {
+    const pokemon: Pokemon = {
+      id: 0,
+      speciesId: 'test',
+      level: 50,
+      hp: 100,
+      maxHP: 100,
+      status: null,
+      stats: {
+        hp: 100,
+        attack: 100,
+        defense: 100,
+        spAttack: 100,
+        spDefense: 100,
+        speed: 100,
+      },
+      statStages: {
+        attack: 0,
+        defense: 0,
+        spAttack: 0,
+        spDefense: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0,
+      },
+      types: ['normal'],
+      ability: 'test',
+      item: null,
+      moves: ['tackle'],
+    };
+
+    const state: BattleState = {
+      pokemon: {
+        0: pokemon,
+      },
+      turnNumber: 0,
+    };
+
+    const turnPlan: TurnPlan = {
+      actions: [{ type: 'SWITCH', pokemon: 0, to: 1 }],
+    };
+
+    // SWITCH は未実装なのでエラーを出す
+    expect(() => executeTurn(turnPlan, state)).toThrow('SWITCH action is not implemented yet');
+  });
 });
