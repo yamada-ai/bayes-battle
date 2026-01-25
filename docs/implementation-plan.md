@@ -2,7 +2,8 @@
 
 ## 0. 目的（この文書の位置づけ）
 - 「学習機構（Belief + PPO）」は上物であり、先に **対戦環境（ルール・演算・ログ）** を成立させる必要がある。
-- 本文書は、実装順と責務分割の詳細を定義し、段階的開発の指針を提供する。
+- 本文書は、実装順と責務分割の概要を定義し、段階的開発の指針を提供する。
+- **詳細な実装計画・サブタスク・調査記録は [GitHub Issues](https://github.com/yamada-ai/bayes-battle/issues) を参照**。
 - 公式データ（ポケモン名/技名/図鑑文/画像等）は **リポジトリに同梱しない**。データは外部取得 or 最小ダミーで進める。
 
 ---
@@ -115,174 +116,52 @@
 
 ---
 
-## 3. 実装順（マイルストーンと完了条件）
+## 3. マイルストーン概要と実装優先順位
 
-### Milestone 0：データスキーマ確定（最小）
-**ゴール：battle-coreが参照する最低限のデータ構造が決まっている。**
+詳細な実装計画・サブタスク・テスト要件は **GitHub Issues** を参照してください：
+https://github.com/yamada-ai/bayes-battle/issues
 
-#### スキーマ対象
-- **type_chart**（タイプ相性）
-- **species**（種族値・タイプ・特性候補）
-- **move**（威力・命中・カテゴリ・追加効果属性）
-- **item**（カテゴリ/発動条件・効果の抽象化）
+| ID | タイトル | ゴール | 完了条件 | Issue |
+|----|---------|-------|----------|-------|
+| **M0** | データスキーマ確定 | battle-coreが参照する最低限のデータ構造（type chart, species, move, item）を確定 | スキーマ + ダミーデータ + バリデーションテストが通る | [#1](https://github.com/yamada-ai/bayes-battle/issues/1) |
+| **M1** | Battle Core 最小戦闘 | 状態遷移とイベント生成が成立する最小の戦闘システム（1v1, 技1つでも可） | seed固定で決定論的に動作、EventLogが出力される | [#2](https://github.com/yamada-ai/bayes-battle/issues/2) |
+| **M2** | Battle Core ルール拡張 | 第4世代らしい複雑性（優先度・状態異常・天候・特性・道具）を実装 | 回帰テスト通過、有名な確定数計算が一致 | [#3](https://github.com/yamada-ai/bayes-battle/issues/3) |
+| **M3** | Battle API | battle-coreをHTTPで叩けるラッパーを実装（step/simulate） | FE/RLから呼び出し可能、リプレイ再現可能 | [#4](https://github.com/yamada-ai/bayes-battle/issues/4) |
+| **M4** | Match Server | 対戦進行管理（ルーム・ターン受付・ログ永続化） | ルーム作成→対戦→終了が完走、EventLog永続化 | [#5](https://github.com/yamada-ai/bayes-battle/issues/5) |
+| **M5** | Frontend 検証UI | リプレイ再生・状態可視化・行動履歴表示 | リプレイ再生可能、BattleState可視化 | [#6](https://github.com/yamada-ai/bayes-battle/issues/6) |
+| **M6** | Belief Tracker | Generative Particle Filter による相手推定 | 典型ケースでbelief収束、FEで可視化 | [#7](https://github.com/yamada-ai/bayes-battle/issues/7) |
+| **M7** | Policy Learning | Latent Action PPO による方策学習 | rollout動作、ルールベース相手に勝率向上 | [#8](https://github.com/yamada-ai/bayes-battle/issues/8) |
 
-#### 完了条件
-- JSON Schema（または TypeScript types）とダミーデータでバリデーションが通る
-- バリデーションテストが存在する
+### 実装の優先順位
 
-#### 成果物
-- `packages/data/schema/` 配下にスキーマ定義
-- `packages/data/examples/` 配下にダミーデータ（10種族・30技程度）
-- バリデーションスクリプト + テスト
+1. **M0（データスキーマ）** が最優先
+   - すべてのコンポーネントが依存する基盤
+   - 最小セット（10種族・30技）で開始
 
----
+2. **M1（最小戦闘）→ M2（ルール拡張）** を先に完成させる
+   - battle-coreの完成がすべての前提
+   - M1は1v1・技1つでも可（最速で動かす）
+   - M2は段階的実装（優先度→状態異常→天候→特性）
 
-### Milestone 1：battle-core 最小戦闘（1v1 / 技1つでも可）
-**ゴール：状態遷移とイベント生成が成立する。**
+3. **M3（API）→ M4（Server）→ M5（FE）** は並行可能
+   - M3完了後、M4/M5は独立して進められる
+   - FEは「検証装置」として早期に着手推奨
 
-#### 実装対象
-- `BattleState` 型定義（最小版：HP・状態・場情報）
-- `Action` 型定義（技選択・交代）
-- `EventLog` 型定義（最小イベント種別）
-- 決定論的RNG（seed固定）
-- 状態遷移ロジック（技実行→ダメージ→HP更新→ターン終了）
-- イベント生成（行動宣言・命中・ダメージ・ターン終了）
+4. **M6（Belief）と M7（Policy）** は M2 完了後に着手
+   - M6はM2のイベントログに依存
+   - M7はM6のbelief出力に依存
 
-#### 完了条件
-- `initial_state + actions + seed -> next_state + events` が決定論で動作
-- 代表的イベント（命中/ダメージ/ターン終了）がログに出る
-- 主要ユニットテストが書ける（seed固定・期待値一致）
+### 依存関係
 
-#### 成果物
-- `packages/battle-core/src/` に実装
-- `packages/battle-core/tests/` にテスト
-
----
-
-### Milestone 2：battle-core ルール拡張（第4世代の要所）
-**ゴール：第4世代らしい複雑性の核心を実装する。**
-
-#### 実装順序（優先度：高→低）
-1. **技優先度 / 先手後手**（素早さ・スカーフ等）
-2. **物理/特殊区分**（第4世代仕様）とダメージ計算
-3. **状態異常**（まひ/やけど/どく/こおり等の基礎）
-4. **天候・場**（砂・霰・ステロ等、必要に応じて段階的）
-5. **特性・道具**（確定ログが出るものから：たべのこし/オボン/スカーフ）
-
-#### 完了条件
-- 代表ケースの回帰テストが通る
-- イベントログから観測（先手後手、回復発動等）が取れる
-- 有名な確定数計算（例：ガブリアスの地震でカイリュー確2等）が一致する
-
-#### 成果物
-- `packages/battle-core/src/` に追加実装
-- `packages/battle-core/tests/regression/` に回帰テスト
-
----
-
-### Milestone 3：battle-api（デバッグ窓口）
-**ゴール：外部（FE/RL）からbattle-coreを一貫して叩ける。**
-
-#### 実装対象
-- `POST /step`: (state, actions, seed) -> (next_state, events)
-- `POST /simulate`: (initial_state, policy_stub, seed, turns) -> replay
-- エラーハンドリング（不正入力・無効行動等）
-
-#### 完了条件
-- step/simulate相当のAPIで、state+actions->eventsが取得できる
-- seed固定でリプレイ再現が可能
-- 簡易テスト（curl/Postmanで叩ける）
-
-#### 成果物
-- `packages/battle-api/src/` に実装
-- OpenAPI/Swagger定義
-
----
-
-### Milestone 4：match-server（最小の対戦進行）
-**ゴール：ターンを入力して対戦が進む"枠"ができる。**
-
-#### 実装対象
-- ルーム作成・参加・準備完了
-- ターン入力受付（両者の行動を待つ）
-- battle-api呼び出し
-- EventLogの永続化（PostgreSQL or SQLite）
-- リプレイ取得API
-
-#### 完了条件
-- ルーム作成→参加→ターン進行→終了までが通る
-- EventLogが永続化され、リプレイ可能
-- 認証は後回し（匿名トークンで可）
-
-#### 成果物
-- `packages/match-server/src/` に実装
-- DB migration scripts
-
----
-
-### Milestone 5：frontend（検証UI：リプレイ＆状態表示）
-**ゴール：実験結果の検証装置が動く。**
-
-#### 実装対象
-- リプレイ再生UI（EventLogを読み込み、時系列表示）
-- BattleState可視化（盤面・HP・状態異常）
-- 行動履歴表示
-- WebSocket接続（リアルタイム観戦）
-
-#### 完了条件
-- matchのEventLogを読み込んでリプレイできる
-- BattleStateとイベントが視覚的に追える
-- 手動でターン入力して対戦が進められる
-
-#### 成果物
-- `packages/frontend/src/` に実装
-- Storybook（コンポーネントカタログ）
-
----
-
-### Milestone 6：belief tracker（Generative Particle / B1）
-**ゴール：相手推定が「動く」ことを確認する（学習はまだ）。**
-
-#### 実装対象
-- 粒子定義：`(C_nature, C_ev, C_item, C_moves)`
-- 尤度計算：
-  - ダメージ尤度（区間尤度 + 技候補周辺化）
-  - 速度尤度（先手後手）
-  - 確定ログ尤度（持ち物・状態異常等）
-- 重み更新・正規化・ESS計算
-- リサンプリング
-- Mixture混入（事前分布からの再生成）
-
-#### 完了条件
-- 典型ケースで belief が収束する（例：スカーフ判定、回復判定）
-- FEで belief（上位粒子・エントロピー）が可視化できる
-- 単体テスト（尤度計算・重み更新）が通る
-
-#### 成果物
-- `rl-engine/belief/` に実装
-- 収束検証スクリプト
-
----
-
-### Milestone 7：policy（Latent Action PPO）接続
-**ゴール：rolloutと学習ループが回る。**
-
-#### 実装対象
-- 行動埋め込み `e(a)`（威力・命中・タイプ・追加効果属性）
-- policy network：意図ベクトル `z_θ(s)` を出力
-- masked softmax（利用可能行動のみ）
-- PPO学習ループ（Actor-Critic）
-- PBRS報酬（HP差・残数差）
-
-#### 完了条件
-- ルールベース/ランダム相手に勝率が上がる
-- 学習ログとリプレイで挙動が説明できる
-- Tensorboard等で学習曲線が確認できる
-
-#### 成果物
-- `rl-engine/policy/` に実装
-- 学習スクリプト + config
-- 実験ログ
+```
+M0 (データスキーマ)
+ └─ M1 (最小戦闘)
+     └─ M2 (ルール拡張)
+         ├─ M3 (API)
+         │   ├─ M4 (Server) ─→ M5 (FE)
+         │   └─ M6 (Belief) ─→ M7 (Policy)
+         └─ M6 (直接依存も可)
+```
 
 ---
 
@@ -339,87 +218,18 @@
 
 ---
 
-## 6. テスト戦略
+## 6. 今後の拡張（Phase 2以降）
 
-### 6.1 battle-core（最重視）
-- **ユニットテスト**: 各関数・モジュール単位
-- **統合テスト**: state遷移の代表ケース
-- **回帰テスト**: 有名な確定数・ダメージ計算
-- **プロパティベーステスト**: ランダム入力で不変条件を検証（例：HP≧0）
-
-### 6.2 battle-api
-- APIエンドポイントの正常/異常系
-- seed固定でのリプレイ再現
-
-### 6.3 match-server
-- ルーム作成・参加・ターン進行のシナリオテスト
-- 同時接続・タイムアウト
-
-### 6.4 frontend
-- Storybookでコンポーネント単位
-- E2Eは後回し（Playwrightで実装可能）
-
-### 6.5 rl-engine
-- 尤度計算の単体テスト
-- belief収束の検証スクリプト
-- policy学習の煙テスト（overfitできるか）
-
----
-
-## 7. 開発環境・ツール
-
-### 7.1 言語・フレームワーク
-- TypeScript: Node.js 20+, pnpm 8+
-- Python: 3.10+, Poetry/uv
-
-### 7.2 テスティング
-- Vitest (TS)
-- pytest (Python)
-
-### 7.3 CI/CD
-- GitHub Actions
-  - lint, type-check, test
-  - ビルド成果物の検証
-
-### 7.4 開発環境
-- Docker Compose（PostgreSQL, Redis等）
-- devcontainer対応（任意）
-
----
-
-## 8. プロジェクト管理
-
-### 8.1 Issue駆動開発
-- 各MilestoneをEpic issueとして作成
-- Epic配下に具体的なFeature issueを切る
-- 完了条件を明確に記載
-
-### 8.2 ブランチ戦略
-- `main`: 安定版
-- `develop`: 開発統合
-- `feature/M0-schema`, `feature/M1-core` 等
-
-### 8.3 コミットメッセージ
-- Conventional Commits準拠
-- 例：`feat(battle-core): add damage calculation`, `test(data): add schema validation`
-
----
-
-## 9. 今後の拡張（Phase 2以降）
-
-### Phase 2（Milestone 7完了後）
 - Rejuvenation（MCMC近傍遷移）
 - 粒子カテゴリの細分化（S調整等）
 - 技タグの高度化（prior学習）
-
-### Phase 3（研究段階）
 - 転移学習（世代変更・技追加への汎化）
 - マルチエージェント（自己対戦）
 - メタゲーム分析（パーティ構築への応用）
 
 ---
 
-## まとめ
+## 7. まとめ
 
 本実装計画は、**決定論的戦闘エンジン（battle-core）を真理の源泉**とし、その上に学習・可視化を積み上げる設計である。
 
@@ -430,9 +240,7 @@
 
 **開発の心構え**：
 - 「最小で動く」ことを優先し、段階的に拡張する
+- Issue駆動開発（調査・議論・意思決定はGitHub Issuesに記録）
 - テストを書いてから実装する（TDD推奨）
-- ドキュメントと実装を同期させる
 
----
-
-この計画に基づき、段階的に実装を進めることで、研究的意義と実用性を兼ね備えたプロジェクトを実現する。
+**詳細な実装計画は [GitHub Issues](https://github.com/yamada-ai/bayes-battle/issues) を参照してください。**
