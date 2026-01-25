@@ -16,9 +16,9 @@ const typeChart: Record<Type, Partial<Record<Type, TypeEffectiveness>>> = {
   poison: {},
   ground: {
     // 地震 vs カイリューに必要
-    dragon: 1,    // 地面 → ドラゴン（等倍）
-    flying: 1,    // 地面 → 飛行（等倍）
-    electric: 2,  // 地面 → 電気（効果抜群）
+    dragon: 1, // 地面 → ドラゴン（等倍）
+    flying: 1, // 地面 → 飛行（等倍）
+    electric: 2, // 地面 → 電気（効果抜群）
   },
   flying: {},
   psychic: {},

@@ -14,7 +14,7 @@ describe('Damage Calculation (Gen 4)', () => {
       status: null,
       stats: {
         hp: 183,
-        attack: 182,      // 攻撃252振り、いじっぱり
+        attack: 182, // 攻撃252振り、いじっぱり
         defense: 115,
         spAttack: 100,
         spDefense: 105,
@@ -46,7 +46,7 @@ describe('Damage Calculation (Gen 4)', () => {
       stats: {
         hp: 200,
         attack: 154,
-        defense: 115,     // 防御無振り
+        defense: 115, // 防御無振り
         spAttack: 120,
         spDefense: 120,
         speed: 100,
@@ -107,6 +107,6 @@ describe('Damage Calculation (Gen 4)', () => {
     });
 
     // 確定2発（最大HPの50%を2回で倒せる）
-    expect(damages[15] * 2).toBeGreaterThan(200);  // 最大乱数で2発
+    expect(damages[15] * 2).toBeGreaterThan(200); // 最大乱数で2発
   });
 });

@@ -36,8 +36,7 @@ export type PublicEvent =
 /**
  * RngEvent: 乱数結果（Replay用）
  */
-export type RngEvent =
-  | { type: 'RNG_ROLL'; purpose: 'damageRoll'; value: number }; // 85-100 (int)
+export type RngEvent = { type: 'RNG_ROLL'; purpose: 'damageRoll'; value: number }; // 85-100 (int)
 
 // 将来の拡張用（コメントアウト）
 // | { type: 'RNG_ROLL'; purpose: 'accuracy'; value: number }     // 0.0-1.0 (float)

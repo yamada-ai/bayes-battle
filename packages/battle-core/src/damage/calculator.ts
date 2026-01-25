@@ -21,7 +21,7 @@ export interface CalculateDamageParams {
  * @see docs/battle-mechanics/damage-calculation.md
  */
 export function calculateDamage(params: CalculateDamageParams): number {
-  const { attacker, defender, move, isCritical, weather, randomRoll } = params;
+  const { attacker, defender, move, isCritical, weather: _weather, randomRoll } = params;
 
   // 技の威力チェック
   if (move.power === null || move.power === 0) {

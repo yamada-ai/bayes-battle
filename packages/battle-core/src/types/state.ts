@@ -20,9 +20,22 @@ export type Type =
 
 export type MoveCategory = 'physical' | 'special' | 'status';
 
-export type StatusCondition = 'burn' | 'freeze' | 'paralysis' | 'poison' | 'badlyPoisoned' | 'sleep';
+export type StatusCondition =
+  | 'burn'
+  | 'freeze'
+  | 'paralysis'
+  | 'poison'
+  | 'badlyPoisoned'
+  | 'sleep';
 
-export type Stat = 'attack' | 'defense' | 'spAttack' | 'spDefense' | 'speed' | 'accuracy' | 'evasion';
+export type Stat =
+  | 'attack'
+  | 'defense'
+  | 'spAttack'
+  | 'spDefense'
+  | 'speed'
+  | 'accuracy'
+  | 'evasion';
 
 export interface Stats {
   hp: number;
