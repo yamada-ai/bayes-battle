@@ -8,13 +8,13 @@ export const PublicEventType = {
   FAINTED: 'FAINTED',
 } as const;
 
-export type PublicEventType = typeof PublicEventType[keyof typeof PublicEventType];
+export type PublicEventType = (typeof PublicEventType)[keyof typeof PublicEventType];
 
 export const RngEventType = {
   RNG_ROLL: 'RNG_ROLL',
 } as const;
 
-export type RngEventType = typeof RngEventType[keyof typeof RngEventType];
+export type RngEventType = (typeof RngEventType)[keyof typeof RngEventType];
 
 /**
  * PublicEvent: 観測可能なイベント（Belief Tracker が読む）

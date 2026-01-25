@@ -8,7 +8,7 @@ export const EffectType = {
   SET_STATUS: 'SET_STATUS',
 } as const;
 
-export type EffectType = typeof EffectType[keyof typeof EffectType];
+export type EffectType = (typeof EffectType)[keyof typeof EffectType];
 
 /**
  * Effect: 内部命令（状態更新・トリガ評価）
