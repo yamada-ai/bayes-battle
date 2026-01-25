@@ -3,6 +3,7 @@ import type { BattleState } from '../types/battle-state';
 import type { PublicEvent, RngEvent } from '../types/event';
 import type { ApplyResult } from '../types/apply-result';
 import type { Pokemon } from '../types/state';
+import type { RngContext } from '../types/rng-context';
 import { applyEffect } from './apply-effect';
 import { evaluateTrigger, TriggerGuard } from './trigger-system';
 
@@ -52,13 +53,19 @@ function getEffectTarget(effect: Effect): PokemonId {
 export function runQueue(
   initialEffects: Effect[],
   state: BattleState,
-  applyEffectFn: (pokemon: Pokemon, effect: Effect, state: BattleState) => ApplyResult = applyEffect
+  applyEffectFn: (pokemon: Pokemon, effect: Effect, state: BattleState, ctx: RngContext) => ApplyResult = applyEffect
 ): RunQueueResult {
   const immediateQueue: Effect[] = [...initialEffects];
   const deferredQueue: Effect[] = [];
 
   const allEvents: PublicEvent[] = [];
   const allRngEvents: RngEvent[] = [];
+
+  // RNG Context（live mode: allRngEventsに追記していく）
+  const rngContext: RngContext = {
+    mode: 'live',
+    rngEvents: allRngEvents,
+  };
 
   const triggerGuard = new TriggerGuard();
 
@@ -75,7 +82,7 @@ export function runQueue(
     }
 
     // applyEffectを実行
-    const result = applyEffectFn(pokemon, effect, state);
+    const result = applyEffectFn(pokemon, effect, state, rngContext);
 
     // イベントを収集
     allEvents.push(...result.events);

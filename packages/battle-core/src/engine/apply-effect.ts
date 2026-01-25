@@ -3,7 +3,9 @@ import { EffectType, type Effect } from '../types/effect';
 import type { ApplyResult } from '../types/apply-result';
 import { PublicEventType, type PublicEvent } from '../types/event';
 import type { BattleState } from '../types/battle-state';
+import type { RngContext } from '../types/rng-context';
 import { calculateDamage } from '../damage/calculator';
+import { rollDamage } from './rng';
 
 /**
  * 技データ取得（最小実装: ハードコード）
@@ -43,9 +45,15 @@ function getMoveData(moveId: string): Move | null {
  * @param pokemon 対象のポケモン（State）
  * @param effect 適用するEffect
  * @param state バトル状態（USE_MOVE など、他ポケモンへの参照が必要な場合に使用）
+ * @param ctx RNG Context（乱数生成・記録用）
  * @returns ApplyResult
  */
-export function applyEffect(pokemon: Pokemon, effect: Effect, state: BattleState): ApplyResult {
+export function applyEffect(
+  pokemon: Pokemon,
+  effect: Effect,
+  state: BattleState,
+  ctx: RngContext
+): ApplyResult {
   const events: PublicEvent[] = [];
   const triggerRequests: ApplyResult['triggerRequests'] = [];
   const derivedEffects: Effect[] = [];
@@ -80,14 +88,17 @@ export function applyEffect(pokemon: Pokemon, effect: Effect, state: BattleState
 
       // ダメージ技の場合
       if (move.category !== 'status' && move.power !== null && move.power > 0) {
-        // ダメージ計算（最小実装: 必中、急所なし、乱数100固定）
+        // ダメージ乱数をロール（RNG記録）
+        const randomRoll = rollDamage(ctx);
+
+        // ダメージ計算（最小実装: 必中、急所なし）
         const damage = calculateDamage({
           attacker: pokemon,
           defender,
           move,
           isCritical: false,
           weather: null,
-          randomRoll: 100, // 固定（最大乱数）
+          randomRoll,
         });
 
         // APPLY_DAMAGE を derivedEffects に追加
