@@ -1,4 +1,4 @@
-import type { Effect, PokemonId } from '../types/effect';
+import { EffectType, type Effect, type PokemonId } from '../types/effect';
 import type { BattleState } from '../types/battle-state';
 import type { PublicEvent, RngEvent } from '../types/event';
 import type { ApplyResult } from '../types/apply-result';
@@ -18,11 +18,11 @@ export interface RunQueueResult {
  */
 function getEffectTarget(effect: Effect): PokemonId {
   switch (effect.type) {
-    case 'APPLY_DAMAGE':
+    case EffectType.APPLY_DAMAGE:
       return effect.target;
-    case 'HEAL':
+    case EffectType.HEAL:
       return effect.pokemon;
-    case 'SET_STATUS':
+    case EffectType.SET_STATUS:
       return effect.pokemon;
     default: {
       // 網羅性チェック: 新しいEffect型を追加したらコンパイルエラーになる

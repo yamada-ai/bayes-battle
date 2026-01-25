@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { applyEffect } from '../src/engine/apply-effect';
 import type { Pokemon } from '../src/types/state';
-import type { Effect } from '../src/types/effect';
+import { EffectType, type Effect } from '../src/types/effect';
+import { PublicEventType } from '../src/types/event';
 
 describe('applyEffect (Core Architecture)', () => {
   let pokemon: Pokemon;
@@ -42,7 +43,7 @@ describe('applyEffect (Core Architecture)', () => {
   describe('Test 1: APPLY_DAMAGE returns DAMAGE_DEALT', () => {
     it('hp: 100 → 40 のとき DAMAGE_DEALT(amount=60, newHP=40) が出る', () => {
       const effect: Effect = {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'dmg-1',
         target: 0,
         amount: 60,
@@ -56,7 +57,7 @@ describe('applyEffect (Core Architecture)', () => {
       // Eventを確認
       expect(result.events).toHaveLength(1);
       expect(result.events[0]).toEqual({
-        type: 'DAMAGE_DEALT',
+        type: PublicEventType.DAMAGE_DEALT,
         target: 0,
         amount: 60,
         newHP: 40,
@@ -76,7 +77,7 @@ describe('applyEffect (Core Architecture)', () => {
       pokemon.hp = 30;
 
       const effect: Effect = {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'dmg-2',
         target: 0,
         amount: 100, // 過剰
@@ -89,7 +90,7 @@ describe('applyEffect (Core Architecture)', () => {
 
       // Eventの amount は実ダメージ
       expect(result.events[0]).toMatchObject({
-        type: 'DAMAGE_DEALT',
+        type: PublicEventType.DAMAGE_DEALT,
         amount: 30, // 過剰ダメは切る
         newHP: 0,
       });
@@ -101,7 +102,7 @@ describe('applyEffect (Core Architecture)', () => {
       pokemon.hp = 30;
 
       const effect: Effect = {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'dmg-3',
         target: 0,
         amount: 30,
@@ -111,9 +112,9 @@ describe('applyEffect (Core Architecture)', () => {
 
       // Eventは2つ（DAMAGE_DEALT + FAINTED）
       expect(result.events).toHaveLength(2);
-      expect(result.events[0].type).toBe('DAMAGE_DEALT');
+      expect(result.events[0].type).toBe(PublicEventType.DAMAGE_DEALT);
       expect(result.events[1]).toEqual({
-        type: 'FAINTED',
+        type: PublicEventType.FAINTED,
         pokemon: 0,
       });
 
@@ -127,7 +128,7 @@ describe('applyEffect (Core Architecture)', () => {
       pokemon.hp = 90;
 
       const effect: Effect = {
-        type: 'HEAL',
+        type: EffectType.HEAL,
         id: 'heal-1',
         pokemon: 0,
         amount: 30, // 過剰
@@ -141,7 +142,7 @@ describe('applyEffect (Core Architecture)', () => {
       // Eventの amount は実回復量
       expect(result.events).toHaveLength(1);
       expect(result.events[0]).toEqual({
-        type: 'HEALED',
+        type: PublicEventType.HEALED,
         pokemon: 0,
         amount: 10, // 実回復量（要求量ではない）
         newHP: 100,
@@ -152,7 +153,7 @@ describe('applyEffect (Core Architecture)', () => {
       pokemon.hp = 50;
 
       const effect: Effect = {
-        type: 'HEAL',
+        type: EffectType.HEAL,
         id: 'heal-2',
         pokemon: 0,
         amount: 30,
@@ -163,7 +164,7 @@ describe('applyEffect (Core Architecture)', () => {
       expect(pokemon.hp).toBe(80);
 
       expect(result.events[0]).toEqual({
-        type: 'HEALED',
+        type: PublicEventType.HEALED,
         pokemon: 0,
         amount: 30,
         newHP: 80,
@@ -176,7 +177,7 @@ describe('applyEffect (Core Architecture)', () => {
       pokemon.status = 'burn';
 
       const effect: Effect = {
-        type: 'SET_STATUS',
+        type: EffectType.SET_STATUS,
         id: 'status-1',
         pokemon: 0,
         status: 'burn',
@@ -193,7 +194,7 @@ describe('applyEffect (Core Architecture)', () => {
 
     it('状態異常なしに burn → STATUS_INFLICTED が出る', () => {
       const effect: Effect = {
-        type: 'SET_STATUS',
+        type: EffectType.SET_STATUS,
         id: 'status-2',
         pokemon: 0,
         status: 'burn',
@@ -207,7 +208,7 @@ describe('applyEffect (Core Architecture)', () => {
       // Event
       expect(result.events).toHaveLength(1);
       expect(result.events[0]).toEqual({
-        type: 'STATUS_INFLICTED',
+        type: PublicEventType.STATUS_INFLICTED,
         target: 0,
         status: 'burn',
       });

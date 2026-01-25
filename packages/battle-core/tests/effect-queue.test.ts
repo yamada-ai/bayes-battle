@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { runQueue } from '../src/engine/effect-queue';
 import type { BattleState } from '../src/types/battle-state';
 import type { Pokemon } from '../src/types/state';
-import type { Effect } from '../src/types/effect';
+import { EffectType, type Effect } from '../src/types/effect';
 import type { ApplyResult } from '../src/types/apply-result';
 import { applyEffect } from '../src/engine/apply-effect';
+import { PublicEventType } from '../src/types/event';
 
 describe('EffectQueue (B1)', () => {
   it('derivedEffects が immediate キューに積まれて優先的に処理される', () => {
@@ -50,9 +51,9 @@ describe('EffectQueue (B1)', () => {
       const result = applyEffect(pokemon, effect);
 
       // APPLY_DAMAGE の場合、derivedEffects で HEAL を追加
-      if (effect.type === 'APPLY_DAMAGE') {
+      if (effect.type === EffectType.APPLY_DAMAGE) {
         result.derivedEffects.push({
-          type: 'HEAL',
+          type: EffectType.HEAL,
           id: 'heal-after-damage',
           pokemon: effect.target,
           amount: 20,
@@ -65,7 +66,7 @@ describe('EffectQueue (B1)', () => {
     // 初期Effect: APPLY_DAMAGE
     const initialEffects: Effect[] = [
       {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'damage-1',
         target: 0,
         amount: 30,
@@ -80,7 +81,7 @@ describe('EffectQueue (B1)', () => {
 
     // 1番目: DAMAGE_DEALT
     expect(result.events[0]).toMatchObject({
-      type: 'DAMAGE_DEALT',
+      type: PublicEventType.DAMAGE_DEALT,
       target: 0,
       amount: 30,
       newHP: 70,
@@ -88,7 +89,7 @@ describe('EffectQueue (B1)', () => {
 
     // 2番目: HEALED（derivedEffects から immediate キューに積まれて処理）
     expect(result.events[1]).toMatchObject({
-      type: 'HEALED',
+      type: PublicEventType.HEALED,
       pokemon: 0,
       amount: 20,
       newHP: 90,
@@ -136,13 +137,13 @@ describe('EffectQueue (B1)', () => {
     // 初期Effect: 2つのダメージ
     const initialEffects: Effect[] = [
       {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'damage-1',
         target: 0,
         amount: 10,
       },
       {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'damage-2',
         target: 0,
         amount: 20,
@@ -155,12 +156,12 @@ describe('EffectQueue (B1)', () => {
     // 2つのダメージイベントが順序通り処理される
     expect(result.events).toHaveLength(2);
     expect(result.events[0]).toMatchObject({
-      type: 'DAMAGE_DEALT',
+      type: PublicEventType.DAMAGE_DEALT,
       amount: 10,
       newHP: 90,
     });
     expect(result.events[1]).toMatchObject({
-      type: 'DAMAGE_DEALT',
+      type: PublicEventType.DAMAGE_DEALT,
       amount: 20,
       newHP: 70,
     });
@@ -214,7 +215,7 @@ describe('EffectQueue (B1)', () => {
 
       if (effect.id === 'damage-1') {
         result.derivedEffects.push({
-          type: 'HEAL',
+          type: EffectType.HEAL,
           id: 'heal-1',
           pokemon: 0,
           amount: 10,
@@ -227,13 +228,13 @@ describe('EffectQueue (B1)', () => {
     // 初期Effect: damage-1, damage-2
     const initialEffects: Effect[] = [
       {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'damage-1',
         target: 0,
         amount: 20,
       },
       {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'damage-2',
         target: 0,
         amount: 10,
@@ -290,9 +291,9 @@ describe('EffectQueue (B1)', () => {
     const customApplyEffect = (pokemon: Pokemon, effect: Effect): ApplyResult => {
       const result = applyEffect(pokemon, effect);
 
-      if (effect.type === 'APPLY_DAMAGE' && effect.id === 'damage-1') {
+      if (effect.type === EffectType.APPLY_DAMAGE && effect.id === 'damage-1') {
         result.derivedEffects.push({
-          type: 'APPLY_DAMAGE',
+          type: EffectType.APPLY_DAMAGE,
           id: 'damage-2',
           target: effect.target,
           amount: 10,
@@ -305,7 +306,7 @@ describe('EffectQueue (B1)', () => {
     // 初期Effect
     const initialEffects: Effect[] = [
       {
-        type: 'APPLY_DAMAGE',
+        type: EffectType.APPLY_DAMAGE,
         id: 'damage-1',
         target: 0,
         amount: 30,
@@ -318,12 +319,12 @@ describe('EffectQueue (B1)', () => {
     // 2つのダメージイベント
     expect(result.events).toHaveLength(2);
     expect(result.events[0]).toMatchObject({
-      type: 'DAMAGE_DEALT',
+      type: PublicEventType.DAMAGE_DEALT,
       amount: 30,
       newHP: 70,
     });
     expect(result.events[1]).toMatchObject({
-      type: 'DAMAGE_DEALT',
+      type: PublicEventType.DAMAGE_DEALT,
       amount: 10,
       newHP: 60,
     });
