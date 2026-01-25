@@ -1,7 +1,7 @@
 import type { Pokemon } from '../types/state';
-import type { Effect } from '../types/effect';
+import { EffectType, type Effect } from '../types/effect';
 import type { ApplyResult } from '../types/apply-result';
-import type { PublicEvent } from '../types/event';
+import { PublicEventType, type PublicEvent } from '../types/event';
 
 /**
  * applyEffect: Effect を適用して State を更新する
@@ -21,7 +21,7 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
   const triggerRequests: ApplyResult['triggerRequests'] = [];
 
   switch (effect.type) {
-    case 'APPLY_DAMAGE': {
+    case EffectType.APPLY_DAMAGE: {
       const oldHP = pokemon.hp;
       const actualDamage = Math.min(effect.amount, oldHP); // 過剰ダメージは切る
       const newHP = Math.max(0, oldHP - effect.amount);
@@ -34,7 +34,7 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
 
       // DAMAGE_DEALT イベント
       events.push({
-        type: 'DAMAGE_DEALT',
+        type: PublicEventType.DAMAGE_DEALT,
         target: effect.target,
         amount: actualDamage, // 実ダメージ（過剰ダメは切る）
         newHP,
@@ -44,7 +44,7 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
       // 瀕死判定（ダメージ直後に即座に処理）
       if (newHP === 0 && oldHP > 0) {
         events.push({
-          type: 'FAINTED',
+          type: PublicEventType.FAINTED,
           pokemon: effect.target,
         });
         // 瀕死なので TriggerRequest は出さない
@@ -61,7 +61,7 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
       break;
     }
 
-    case 'HEAL': {
+    case EffectType.HEAL: {
       const oldHP = pokemon.hp;
       const requestedAmount = effect.amount;
       const actualAmount = Math.min(requestedAmount, pokemon.maxHP - oldHP); // 上限でクリップ
@@ -72,7 +72,7 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
 
       // HEALED イベント
       events.push({
-        type: 'HEALED',
+        type: PublicEventType.HEALED,
         pokemon: effect.pokemon,
         amount: actualAmount, // 実回復量（要求量ではない）
         newHP,
@@ -81,7 +81,7 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
       break;
     }
 
-    case 'SET_STATUS': {
+    case EffectType.SET_STATUS: {
       // 既に状態異常がある場合は何もしない（Phase 1仕様）
       if (pokemon.status !== null) {
         // イベントは出さない
@@ -93,7 +93,7 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
 
       // STATUS_INFLICTED イベント
       events.push({
-        type: 'STATUS_INFLICTED',
+        type: PublicEventType.STATUS_INFLICTED,
         target: effect.pokemon,
         status: effect.status,
       });

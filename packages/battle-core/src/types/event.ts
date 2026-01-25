@@ -1,20 +1,35 @@
 import type { StatusCondition } from './state';
 import type { PokemonId } from './effect';
 
+export const PublicEventType = {
+  DAMAGE_DEALT: 'DAMAGE_DEALT',
+  HEALED: 'HEALED',
+  STATUS_INFLICTED: 'STATUS_INFLICTED',
+  FAINTED: 'FAINTED',
+} as const;
+
+export type PublicEventType = (typeof PublicEventType)[keyof typeof PublicEventType];
+
+export const RngEventType = {
+  RNG_ROLL: 'RNG_ROLL',
+} as const;
+
+export type RngEventType = (typeof RngEventType)[keyof typeof RngEventType];
+
 /**
  * PublicEvent: 観測可能なイベント（Belief Tracker が読む）
  */
 export type PublicEvent =
   // === ダメージ・回復 ===
   | {
-      type: 'DAMAGE_DEALT';
+      type: typeof PublicEventType.DAMAGE_DEALT;
       target: PokemonId;
       amount: number; // 実ダメージ（過剰ダメージは切る）
       newHP: number;
       newHPPercent: number; // 丸めルール: 小数点2桁まで
     }
   | {
-      type: 'HEALED';
+      type: typeof PublicEventType.HEALED;
       pokemon: PokemonId;
       amount: number; // 実回復量（上限でクリップされた量）
       newHP: number;
@@ -22,21 +37,21 @@ export type PublicEvent =
 
   // === 状態異常 ===
   | {
-      type: 'STATUS_INFLICTED';
+      type: typeof PublicEventType.STATUS_INFLICTED;
       target: PokemonId;
       status: StatusCondition;
     }
 
   // === 瀕死 ===
   | {
-      type: 'FAINTED';
+      type: typeof PublicEventType.FAINTED;
       pokemon: PokemonId;
     };
 
 /**
  * RngEvent: 乱数結果（Replay用）
  */
-export type RngEvent = { type: 'RNG_ROLL'; purpose: 'damageRoll'; value: number }; // 85-100 (int)
+export type RngEvent = { type: typeof RngEventType.RNG_ROLL; purpose: 'damageRoll'; value: number }; // 85-100 (int)
 
 // 将来の拡張用（コメントアウト）
 // | { type: 'RNG_ROLL'; purpose: 'accuracy'; value: number }     // 0.0-1.0 (float)
