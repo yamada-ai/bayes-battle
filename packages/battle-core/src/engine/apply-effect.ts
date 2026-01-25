@@ -101,6 +101,25 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
       break;
     }
 
+    case EffectType.CONSUME_ITEM: {
+      // アイテムを持っていない場合は何もしない
+      if (pokemon.item !== effect.item) {
+        break;
+      }
+
+      // State更新: アイテムを削除
+      pokemon.item = null;
+
+      // ITEM_CONSUMED イベント
+      events.push({
+        type: PublicEventType.ITEM_CONSUMED,
+        pokemon: effect.pokemon,
+        item: effect.item,
+      });
+
+      break;
+    }
+
     default: {
       // 未実装のEffect
       const _exhaustive: never = effect;

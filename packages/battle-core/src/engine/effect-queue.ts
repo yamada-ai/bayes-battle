@@ -25,6 +25,8 @@ function getEffectTarget(effect: Effect): PokemonId {
       return effect.pokemon;
     case EffectType.SET_STATUS:
       return effect.pokemon;
+    case EffectType.CONSUME_ITEM:
+      return effect.pokemon;
     default: {
       // 網羅性チェック: 新しいEffect型を追加したらコンパイルエラーになる
       const _exhaustive: never = effect;
@@ -77,7 +79,7 @@ export function runQueue(
     allEvents.push(...result.events);
     allRngEvents.push(...result.rngEvents);
 
-    // derivedEffectsをimmediateキューの先頭に追加（優先度高）
+    // derivedEffectsをimmediateキューの先頭に追加（最優先）
     // unshiftで先頭に追加することで、残りの初期Effectより先に処理される
     immediateQueue.unshift(...result.derivedEffects);
 
@@ -88,8 +90,9 @@ export function runQueue(
       // Triggerから生成されたイベントを収集
       allEvents.push(...triggerResult.events);
 
-      // Triggerから生成されたEffectをimmediateキューに追加
-      immediateQueue.unshift(...triggerResult.effects);
+      // Triggerから生成されたEffectをimmediateキューの末尾に追加
+      // pushで末尾に追加することで、derivedEffectsより後に処理される
+      immediateQueue.push(...triggerResult.effects);
     }
   }
 

@@ -75,19 +75,21 @@ describe('TriggerSystem (B2)', () => {
       item: 'oranBerry',
     });
 
-    // 3. ITEM_CONSUMED（オボンのみ消費）
+    // 3. HEALED（HP 90 → 100）
+    // HEAL Effect が先に処理される
     expect(result.events[2]).toMatchObject({
-      type: PublicEventType.ITEM_CONSUMED,
-      pokemon: 0,
-      item: 'oranBerry',
-    });
-
-    // 4. HEALED（HP 90 → 100）
-    expect(result.events[3]).toMatchObject({
       type: PublicEventType.HEALED,
       pokemon: 0,
       amount: 10,
       newHP: 100,
+    });
+
+    // 4. ITEM_CONSUMED（オボンのみ消費）
+    // CONSUME_ITEM Effect が後に処理される
+    expect(result.events[3]).toMatchObject({
+      type: PublicEventType.ITEM_CONSUMED,
+      pokemon: 0,
+      item: 'oranBerry',
     });
 
     // ポケモンのアイテムが削除されている

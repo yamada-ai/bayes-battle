@@ -80,7 +80,7 @@ function evaluateOranBerry(
     },
   ];
 
-  // 回復 Effect
+  // Effect: 回復 + アイテム消費
   const effects: Effect[] = [
     {
       type: EffectType.HEAL,
@@ -88,17 +88,13 @@ function evaluateOranBerry(
       pokemon: pokemonId,
       amount: 10,
     },
+    {
+      type: EffectType.CONSUME_ITEM,
+      id: `oran-consume-${pokemonId}`,
+      pokemon: pokemonId,
+      item: 'oranBerry',
+    },
   ];
-
-  // アイテム消費イベント（オボンのみは使い捨て）
-  events.push({
-    type: PublicEventType.ITEM_CONSUMED,
-    pokemon: pokemonId,
-    item: 'oranBerry',
-  });
-
-  // ポケモンのアイテムを削除
-  pokemon.item = null;
 
   return { effects, events };
 }
