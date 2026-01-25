@@ -7,19 +7,19 @@ import { PublicEventType, type PublicEvent } from '../src/types/event';
 
 describe('Phase (B3)', () => {
   it('5ターン回してreplay一致（超ミニ実装）', () => {
-    // テスト用のポケモン2体
+    // テスト用のポケモン2体（高HP、低攻撃で瀕死を防ぐ）
     const pokemon1: Pokemon = {
       id: 0,
       speciesId: 'test1',
       level: 50,
-      hp: 100,
-      maxHP: 100,
+      hp: 500,
+      maxHP: 500,
       status: null,
       stats: {
-        hp: 100,
-        attack: 100,
+        hp: 500,
+        attack: 10, // 低攻撃
         defense: 100,
-        spAttack: 100,
+        spAttack: 10,
         spDefense: 100,
         speed: 100,
       },
@@ -42,14 +42,14 @@ describe('Phase (B3)', () => {
       id: 1,
       speciesId: 'test2',
       level: 50,
-      hp: 100,
-      maxHP: 100,
+      hp: 500,
+      maxHP: 500,
       status: null,
       stats: {
-        hp: 100,
-        attack: 100,
+        hp: 500,
+        attack: 10, // 低攻撃
         defense: 100,
-        spAttack: 100,
+        spAttack: 10,
         spDefense: 100,
         speed: 100,
       },
@@ -120,6 +120,10 @@ describe('Phase (B3)', () => {
     // 各ターンでUSE_MOVEイベントが2つ出ている
     const useMoveEvents = events1.filter((e) => e.type === PublicEventType.USE_MOVE);
     expect(useMoveEvents).toHaveLength(10); // 5ターン × 2体
+
+    // 各ターンでDAMAGE_DEALTイベントが2つ出ている
+    const damageEvents = events1.filter((e) => e.type === PublicEventType.DAMAGE_DEALT);
+    expect(damageEvents).toHaveLength(10); // 5ターン × 2体
   });
 
   it('ターン番号が正しくインクリメントされる', () => {
@@ -312,5 +316,115 @@ describe('Phase (B3)', () => {
 
     // SWITCH は未実装なのでエラーを出す
     expect(() => executeTurn(turnPlan, state)).toThrow('SWITCH action is not implemented yet');
+  });
+
+  it('USE_MOVE → APPLY_DAMAGE → FAINTED の連鎖', () => {
+    // 攻撃側: 高攻撃
+    const attacker: Pokemon = {
+      id: 0,
+      speciesId: 'attacker',
+      level: 50,
+      hp: 100,
+      maxHP: 100,
+      status: null,
+      stats: {
+        hp: 100,
+        attack: 200, // 高攻撃
+        defense: 100,
+        spAttack: 100,
+        spDefense: 100,
+        speed: 100,
+      },
+      statStages: {
+        attack: 0,
+        defense: 0,
+        spAttack: 0,
+        spDefense: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0,
+      },
+      types: ['normal'],
+      ability: 'test',
+      item: null,
+      moves: ['tackle'],
+    };
+
+    // 防御側: 低HP
+    const defender: Pokemon = {
+      id: 1,
+      speciesId: 'defender',
+      level: 50,
+      hp: 10, // 低HP
+      maxHP: 100,
+      status: null,
+      stats: {
+        hp: 100,
+        attack: 100,
+        defense: 100,
+        spAttack: 100,
+        spDefense: 100,
+        speed: 100,
+      },
+      statStages: {
+        attack: 0,
+        defense: 0,
+        spAttack: 0,
+        spDefense: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0,
+      },
+      types: ['normal'],
+      ability: 'test',
+      item: null,
+      moves: ['tackle'],
+    };
+
+    const state: BattleState = {
+      pokemon: {
+        0: attacker,
+        1: defender,
+      },
+      turnNumber: 0,
+    };
+
+    const turnPlan: TurnPlan = {
+      actions: [{ type: 'USE_MOVE', pokemon: 0, moveId: 'tackle' }],
+    };
+
+    const result = executeTurn(turnPlan, state);
+
+    // イベント確認
+    const events = result.events;
+
+    // 1. TURN_START
+    expect(events[0]).toMatchObject({
+      type: PublicEventType.TURN_START,
+      turnNumber: 1,
+    });
+
+    // 2. USE_MOVE
+    expect(events[1]).toMatchObject({
+      type: PublicEventType.USE_MOVE,
+      pokemon: 0,
+      moveId: 'tackle',
+    });
+
+    // 3. DAMAGE_DEALT
+    expect(events[2]).toMatchObject({
+      type: PublicEventType.DAMAGE_DEALT,
+      target: 1,
+      newHP: 0,
+    });
+
+    // 4. FAINTED
+    expect(events[3]).toMatchObject({
+      type: PublicEventType.FAINTED,
+      pokemon: 1,
+    });
+
+    // 防御側が瀕死
+    expect(defender.hp).toBe(0);
   });
 });

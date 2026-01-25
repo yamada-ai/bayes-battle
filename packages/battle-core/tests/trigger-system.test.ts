@@ -42,6 +42,7 @@ describe('TriggerSystem (B2)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // 初期Effect: 10ダメージ（HP 100 → 90、1/2以下になる）
@@ -135,6 +136,7 @@ describe('TriggerSystem (B2)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // 初期Effect: 10ダメージ（HP 150 → 140、1/2より上）
@@ -204,6 +206,7 @@ describe('TriggerSystem (B2)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // 初期Effect: 20ダメージ（HP 10 → 0、瀕死）
@@ -279,6 +282,7 @@ describe('TriggerSystem (B2)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // 初期Effect: 10ダメージ（HP 100 → 90、1/2以下になる）→ オボンのみ発動

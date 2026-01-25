@@ -1,7 +1,35 @@
-import type { Pokemon } from '../types/state';
+import type { Pokemon, Move } from '../types/state';
 import { EffectType, type Effect } from '../types/effect';
 import type { ApplyResult } from '../types/apply-result';
 import { PublicEventType, type PublicEvent } from '../types/event';
+import type { BattleState } from '../types/battle-state';
+import { calculateDamage } from '../damage/calculator';
+
+/**
+ * 技データ取得（最小実装: ハードコード）
+ *
+ * TODO: 将来的には state.moveDatabase から取得
+ */
+function getMoveData(moveId: string): Move | null {
+  // 最小実装: tackle のみサポート
+  if (moveId === 'tackle') {
+    return {
+      id: 'tackle',
+      name: 'たいあたり',
+      type: 'normal',
+      category: 'physical',
+      power: 40,
+      accuracy: 100,
+      priority: 0,
+      pp: 35,
+      target: 'normal',
+      makesContact: true,
+    };
+  }
+
+  // 未実装の技
+  return null;
+}
 
 /**
  * applyEffect: Effect を適用して State を更新する
@@ -14,9 +42,10 @@ import { PublicEventType, type PublicEvent } from '../types/event';
  *
  * @param pokemon 対象のポケモン（State）
  * @param effect 適用するEffect
+ * @param state バトル状態（USE_MOVE など、他ポケモンへの参照が必要な場合に使用）
  * @returns ApplyResult
  */
-export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
+export function applyEffect(pokemon: Pokemon, effect: Effect, state: BattleState): ApplyResult {
   const events: PublicEvent[] = [];
   const triggerRequests: ApplyResult['triggerRequests'] = [];
   const derivedEffects: Effect[] = [];
@@ -30,8 +59,45 @@ export function applyEffect(pokemon: Pokemon, effect: Effect): ApplyResult {
         moveId: effect.moveId,
       });
 
-      // TODO: 実際の技効果処理（B3最小実装では省略）
-      // 今は USE_MOVE イベントを出すだけ
+      // 技データ取得（最小実装: tackle のみハードコード）
+      const move = getMoveData(effect.moveId);
+
+      if (!move) {
+        // 未実装の技
+        break;
+      }
+
+      // 対象決定（最小実装: 2体戦のみ対応、単体1体、相手固定）
+      // TODO: 将来的には move.target と場の状況から対象を決定
+      // 制約: PokemonId は 0 と 1 のみを想定
+      const targetId = effect.pokemon === 0 ? 1 : 0;
+      const defender = state.pokemon[targetId];
+
+      if (!defender || defender.hp === 0) {
+        // 対象が存在しない or 瀕死ならスキップ
+        break;
+      }
+
+      // ダメージ技の場合
+      if (move.category !== 'status' && move.power !== null && move.power > 0) {
+        // ダメージ計算（最小実装: 必中、急所なし、乱数100固定）
+        const damage = calculateDamage({
+          attacker: pokemon,
+          defender,
+          move,
+          isCritical: false,
+          weather: null,
+          randomRoll: 100, // 固定（最大乱数）
+        });
+
+        // APPLY_DAMAGE を derivedEffects に追加
+        derivedEffects.push({
+          type: EffectType.APPLY_DAMAGE,
+          id: `${effect.id}-damage`,
+          target: targetId,
+          amount: damage,
+        });
+      }
 
       break;
     }

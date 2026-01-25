@@ -44,11 +44,12 @@ describe('EffectQueue (B1)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // カスタムの applyEffect: APPLY_DAMAGE の後に derivedEffects で HEAL を返す
     const customApplyEffect = (pokemon: Pokemon, effect: Effect): ApplyResult => {
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       // APPLY_DAMAGE の場合、derivedEffects で HEAL を追加
       if (effect.type === EffectType.APPLY_DAMAGE) {
@@ -132,6 +133,7 @@ describe('EffectQueue (B1)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // 初期Effect: 2つのダメージ
@@ -203,6 +205,7 @@ describe('EffectQueue (B1)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // 処理順序を記録
@@ -211,7 +214,7 @@ describe('EffectQueue (B1)', () => {
     // カスタムの applyEffect: damage-1 のみ derivedEffects で heal-1 を返す
     const customApplyEffect = (pokemon: Pokemon, effect: Effect): ApplyResult => {
       processOrder.push(effect.id);
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       if (effect.id === 'damage-1') {
         result.derivedEffects.push({
@@ -285,11 +288,12 @@ describe('EffectQueue (B1)', () => {
       pokemon: {
         0: pokemon,
       },
+      turnNumber: 0,
     };
 
     // カスタムの applyEffect: 最初のダメージだけ derivedEffects で2つ目のダメージを返す
     const customApplyEffect = (pokemon: Pokemon, effect: Effect): ApplyResult => {
-      const result = applyEffect(pokemon, effect);
+      const result = applyEffect(pokemon, effect, state);
 
       if (effect.type === EffectType.APPLY_DAMAGE && effect.id === 'damage-1') {
         result.derivedEffects.push({
