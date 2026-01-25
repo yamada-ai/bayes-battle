@@ -19,6 +19,8 @@ export interface RunQueueResult {
  */
 function getEffectTarget(effect: Effect): PokemonId {
   switch (effect.type) {
+    case EffectType.USE_MOVE:
+      return effect.pokemon;
     case EffectType.APPLY_DAMAGE:
       return effect.target;
     case EffectType.HEAL:

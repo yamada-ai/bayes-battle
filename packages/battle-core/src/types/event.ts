@@ -2,6 +2,8 @@ import type { StatusCondition } from './state';
 import type { PokemonId } from './effect';
 
 export const PublicEventType = {
+  TURN_START: 'TURN_START',
+  USE_MOVE: 'USE_MOVE',
   DAMAGE_DEALT: 'DAMAGE_DEALT',
   HEALED: 'HEALED',
   STATUS_INFLICTED: 'STATUS_INFLICTED',
@@ -22,6 +24,17 @@ export type RngEventType = (typeof RngEventType)[keyof typeof RngEventType];
  * PublicEvent: 観測可能なイベント（Belief Tracker が読む）
  */
 export type PublicEvent =
+  // === ターン進行 ===
+  | {
+      type: typeof PublicEventType.TURN_START;
+      turnNumber: number;
+    }
+  | {
+      type: typeof PublicEventType.USE_MOVE;
+      pokemon: PokemonId;
+      moveId: string;
+    }
+
   // === ダメージ・回復 ===
   | {
       type: typeof PublicEventType.DAMAGE_DEALT;
