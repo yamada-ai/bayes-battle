@@ -86,18 +86,20 @@ export function applyEffect(
         break;
       }
 
-      // 命中判定（RNG記録）
-      const accuracyRoll = rollAccuracy(ctx);
-      const hits = accuracyRoll <= move.accuracy;
+      // 命中判定（accuracy が null の場合は必中技）
+      if (move.accuracy !== null) {
+        const accuracyRoll = rollAccuracy(ctx);
+        const hits = accuracyRoll <= move.accuracy;
 
-      if (!hits) {
-        // 外れた場合
-        events.push({
-          type: PublicEventType.MOVE_MISSED,
-          pokemon: effect.pokemon,
-          moveId: effect.moveId,
-        });
-        break;
+        if (!hits) {
+          // 外れた場合
+          events.push({
+            type: PublicEventType.MOVE_MISSED,
+            pokemon: effect.pokemon,
+            moveId: effect.moveId,
+          });
+          break;
+        }
       }
 
       // ダメージ技の場合
