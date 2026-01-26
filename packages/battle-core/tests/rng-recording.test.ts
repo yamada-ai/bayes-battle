@@ -5,7 +5,6 @@ import type { Pokemon } from '../src/types/state';
 import { EffectType, type Effect } from '../src/types/effect';
 import { RngEventType } from '../src/types/event';
 import type { RngContext } from '../src/types/rng-context';
-import { applyEffect } from '../src/engine/apply-effect';
 
 describe('RNG Recording (damageRoll)', () => {
   it('USE_MOVE すると damageRoll の RngEvent が 1件出る', () => {
@@ -37,7 +36,7 @@ describe('RNG Recording (damageRoll)', () => {
       types: ['normal'],
       ability: 'test',
       item: null,
-      moves: [{ id: 'tackle', pp: 35 }],
+      moves: ['tackle'],
     };
 
     const pokemon2: Pokemon = {
@@ -129,7 +128,7 @@ describe('RNG Recording (damageRoll)', () => {
       types: ['normal'],
       ability: 'test',
       item: null,
-      moves: [{ id: 'tackle', pp: 35 }],
+      moves: ['tackle'],
     };
 
     const pokemon2: Pokemon = {
@@ -159,7 +158,7 @@ describe('RNG Recording (damageRoll)', () => {
       types: ['normal'],
       ability: 'test',
       item: null,
-      moves: [{ id: 'tackle', pp: 35 }],
+      moves: ['tackle'],
     };
 
     const state: BattleState = {
@@ -232,7 +231,7 @@ describe('RNG Recording (damageRoll)', () => {
       types: ['normal'],
       ability: 'test',
       item: null,
-      moves: [{ id: 'tackle', pp: 35 }],
+      moves: ['tackle'],
     };
 
     const pokemon2: Pokemon = {
@@ -262,7 +261,7 @@ describe('RNG Recording (damageRoll)', () => {
       types: ['normal'],
       ability: 'test',
       item: null,
-      moves: [{ id: 'tackle', pp: 35 }],
+      moves: ['tackle'],
     };
 
     const state1: BattleState = {
@@ -299,24 +298,14 @@ describe('RNG Recording (damageRoll)', () => {
       turnNumber: 0,
     };
 
-    // Replay用のカスタムapplyEffect（RNG contextをreplayモードで作成）
+    // Replay用のRngContext
     const replayContext: RngContext = {
       mode: 'replay',
       rngEvents,
       consumeIndex: 0,
     };
 
-    const applyEffectReplay = (
-      pokemon: Pokemon,
-      effect: Effect,
-      state: BattleState,
-      _ctx: RngContext
-    ) => {
-      // replayContext を使用（_ctx は無視）
-      return applyEffect(pokemon, effect, state, replayContext);
-    };
-
-    const result2 = runQueue(initialEffects, state2, applyEffectReplay);
+    const result2 = runQueue(initialEffects, state2, replayContext);
 
     // 最終状態が一致することを確認
     expect(state1.pokemon[0].hp).toBe(state2.pokemon[0].hp);

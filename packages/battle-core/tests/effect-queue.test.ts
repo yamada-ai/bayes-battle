@@ -81,7 +81,7 @@ describe('EffectQueue (B1)', () => {
     ];
 
     // runQueue を実行
-    const result = runQueue(initialEffects, state, customApplyEffect);
+    const result = runQueue(initialEffects, state, undefined, customApplyEffect);
 
     // イベントの順序を確認
     expect(result.events).toHaveLength(2);
@@ -256,7 +256,7 @@ describe('EffectQueue (B1)', () => {
     ];
 
     // runQueue を実行
-    runQueue(initialEffects, state, customApplyEffect);
+    runQueue(initialEffects, state, undefined, customApplyEffect);
 
     // 処理順序を確認: damage-1 → heal-1 → damage-2
     // derivedEffects (heal-1) が残りの初期Effect (damage-2) より先に処理される
@@ -334,7 +334,7 @@ describe('EffectQueue (B1)', () => {
     ];
 
     // runQueue を実行
-    const result = runQueue(initialEffects, state, customApplyEffect);
+    const result = runQueue(initialEffects, state, undefined, customApplyEffect);
 
     // 2つのダメージイベント
     expect(result.events).toHaveLength(2);
