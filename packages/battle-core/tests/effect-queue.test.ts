@@ -4,6 +4,7 @@ import type { BattleState } from '../src/types/battle-state';
 import type { Pokemon } from '../src/types/state';
 import { EffectType, type Effect } from '../src/types/effect';
 import type { ApplyResult } from '../src/types/apply-result';
+import type { RngContext } from '../src/types/rng-context';
 import { applyEffect } from '../src/engine/apply-effect';
 import { PublicEventType } from '../src/types/event';
 
@@ -48,8 +49,13 @@ describe('EffectQueue (B1)', () => {
     };
 
     // カスタムの applyEffect: APPLY_DAMAGE の後に derivedEffects で HEAL を返す
-    const customApplyEffect = (pokemon: Pokemon, effect: Effect): ApplyResult => {
-      const result = applyEffect(pokemon, effect, state);
+    const customApplyEffect = (
+      pokemon: Pokemon,
+      effect: Effect,
+      state: BattleState,
+      ctx: RngContext
+    ): ApplyResult => {
+      const result = applyEffect(pokemon, effect, state, ctx);
 
       // APPLY_DAMAGE の場合、derivedEffects で HEAL を追加
       if (effect.type === EffectType.APPLY_DAMAGE) {
@@ -75,7 +81,7 @@ describe('EffectQueue (B1)', () => {
     ];
 
     // runQueue を実行
-    const result = runQueue(initialEffects, state, customApplyEffect);
+    const result = runQueue(initialEffects, state, undefined, customApplyEffect);
 
     // イベントの順序を確認
     expect(result.events).toHaveLength(2);
@@ -212,9 +218,14 @@ describe('EffectQueue (B1)', () => {
     const processOrder: string[] = [];
 
     // カスタムの applyEffect: damage-1 のみ derivedEffects で heal-1 を返す
-    const customApplyEffect = (pokemon: Pokemon, effect: Effect): ApplyResult => {
+    const customApplyEffect = (
+      pokemon: Pokemon,
+      effect: Effect,
+      state: BattleState,
+      ctx: RngContext
+    ): ApplyResult => {
       processOrder.push(effect.id);
-      const result = applyEffect(pokemon, effect, state);
+      const result = applyEffect(pokemon, effect, state, ctx);
 
       if (effect.id === 'damage-1') {
         result.derivedEffects.push({
@@ -245,7 +256,7 @@ describe('EffectQueue (B1)', () => {
     ];
 
     // runQueue を実行
-    runQueue(initialEffects, state, customApplyEffect);
+    runQueue(initialEffects, state, undefined, customApplyEffect);
 
     // 処理順序を確認: damage-1 → heal-1 → damage-2
     // derivedEffects (heal-1) が残りの初期Effect (damage-2) より先に処理される
@@ -292,8 +303,13 @@ describe('EffectQueue (B1)', () => {
     };
 
     // カスタムの applyEffect: 最初のダメージだけ derivedEffects で2つ目のダメージを返す
-    const customApplyEffect = (pokemon: Pokemon, effect: Effect): ApplyResult => {
-      const result = applyEffect(pokemon, effect, state);
+    const customApplyEffect = (
+      pokemon: Pokemon,
+      effect: Effect,
+      state: BattleState,
+      ctx: RngContext
+    ): ApplyResult => {
+      const result = applyEffect(pokemon, effect, state, ctx);
 
       if (effect.type === EffectType.APPLY_DAMAGE && effect.id === 'damage-1') {
         result.derivedEffects.push({
@@ -318,7 +334,7 @@ describe('EffectQueue (B1)', () => {
     ];
 
     // runQueue を実行
-    const result = runQueue(initialEffects, state, customApplyEffect);
+    const result = runQueue(initialEffects, state, undefined, customApplyEffect);
 
     // 2つのダメージイベント
     expect(result.events).toHaveLength(2);

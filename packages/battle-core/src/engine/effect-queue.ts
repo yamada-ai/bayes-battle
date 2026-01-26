@@ -3,6 +3,7 @@ import type { BattleState } from '../types/battle-state';
 import type { PublicEvent, RngEvent } from '../types/event';
 import type { ApplyResult } from '../types/apply-result';
 import type { Pokemon } from '../types/state';
+import type { RngContext } from '../types/rng-context';
 import { applyEffect } from './apply-effect';
 import { evaluateTrigger, TriggerGuard } from './trigger-system';
 
@@ -46,19 +47,32 @@ function getEffectTarget(effect: Effect): PokemonId {
  *
  * @param initialEffects 初期Effect配列
  * @param state バトル状態
+ * @param ctx RNG Context（省略時は live mode）
  * @param applyEffectFn Effect適用関数（デフォルトは applyEffect、テストでカスタマイズ可能）
  * @returns 全イベントとRngイベント
  */
 export function runQueue(
   initialEffects: Effect[],
   state: BattleState,
-  applyEffectFn: (pokemon: Pokemon, effect: Effect, state: BattleState) => ApplyResult = applyEffect
+  ctx?: RngContext,
+  applyEffectFn: (
+    pokemon: Pokemon,
+    effect: Effect,
+    state: BattleState,
+    ctx: RngContext
+  ) => ApplyResult = applyEffect
 ): RunQueueResult {
   const immediateQueue: Effect[] = [...initialEffects];
   const deferredQueue: Effect[] = [];
 
   const allEvents: PublicEvent[] = [];
   const allRngEvents: RngEvent[] = [];
+
+  // RNG Context: 引数で渡されていなければ live mode を作成
+  const rngContext: RngContext = ctx ?? {
+    mode: 'live',
+    rngEvents: allRngEvents,
+  };
 
   const triggerGuard = new TriggerGuard();
 
@@ -75,11 +89,11 @@ export function runQueue(
     }
 
     // applyEffectを実行
-    const result = applyEffectFn(pokemon, effect, state);
+    const result = applyEffectFn(pokemon, effect, state, rngContext);
 
     // イベントを収集
     allEvents.push(...result.events);
-    allRngEvents.push(...result.rngEvents);
+    // RngEventsはrngContext.rngEventsに直接追記されるため、ここでは収集しない
 
     // derivedEffectsをimmediateキューの先頭に追加（最優先）
     // unshiftで先頭に追加することで、残りの初期Effectより先に処理される
