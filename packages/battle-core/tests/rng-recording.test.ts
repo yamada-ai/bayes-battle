@@ -306,7 +306,12 @@ describe('RNG Recording (damageRoll)', () => {
       consumeIndex: 0,
     };
 
-    const applyEffectReplay = (pokemon: Pokemon, effect: Effect, state: BattleState, _ctx: RngContext) => {
+    const applyEffectReplay = (
+      pokemon: Pokemon,
+      effect: Effect,
+      state: BattleState,
+      _ctx: RngContext
+    ) => {
       // replayContext を使用（_ctx は無視）
       return applyEffect(pokemon, effect, state, replayContext);
     };

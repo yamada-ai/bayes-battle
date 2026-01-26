@@ -53,7 +53,12 @@ function getEffectTarget(effect: Effect): PokemonId {
 export function runQueue(
   initialEffects: Effect[],
   state: BattleState,
-  applyEffectFn: (pokemon: Pokemon, effect: Effect, state: BattleState, ctx: RngContext) => ApplyResult = applyEffect
+  applyEffectFn: (
+    pokemon: Pokemon,
+    effect: Effect,
+    state: BattleState,
+    ctx: RngContext
+  ) => ApplyResult = applyEffect
 ): RunQueueResult {
   const immediateQueue: Effect[] = [...initialEffects];
   const deferredQueue: Effect[] = [];
