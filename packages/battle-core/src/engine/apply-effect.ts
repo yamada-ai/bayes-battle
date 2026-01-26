@@ -10,7 +10,7 @@ import { rollDamage, rollAccuracy } from './rng';
 /**
  * 技データ取得（最小実装: ハードコード）
  *
- * TODO: 将来的には state.moveDatabase から取得
+ * TODO(movedb): 将来的には state.moveDatabase から取得
  */
 function getMoveData(moveId: string): Move | null {
   // 最小実装: tackle のみサポート
@@ -76,7 +76,7 @@ export function applyEffect(
       }
 
       // 対象決定（最小実装: 2体戦のみ対応、単体1体、相手固定）
-      // TODO: 将来的には move.target と場の状況から対象を決定
+      // TODO(targeting): 将来的には move.target と場の状況から対象を決定
       // 制約: PokemonId は 0 と 1 のみを想定
       const targetId = effect.pokemon === 0 ? 1 : 0;
       const defender = state.pokemon[targetId];

@@ -186,15 +186,16 @@ describe('Accuracy Check', () => {
       turnNumber: 0,
     };
 
-    // カスタムRngContext: accuracyRollを50に設定（tackleのaccuracy=100なので命中）
-    // 外れさせるには accuracyRoll > move.accuracy にする必要がある
+    // カスタムRngContext: accuracyRollを101に設定して外れをシミュレート
+    // NOTE: 仕様上は1-100だが、現状tackle (accuracy=100) しかないため範囲外の値を使用
+    // TODO(accuracy): accuracy<100の技を追加したら、このテストを正規の範囲（例: accuracy=85, roll=86）に修正
     const customRngContext: RngContext = {
       mode: 'replay',
       rngEvents: [
         {
           type: RngEventType.RNG_ROLL,
           purpose: 'accuracyRoll',
-          value: 101, // 100を超えるので外れる
+          value: 101, // tackleのaccuracy=100を超えるので外れる
         },
       ],
       consumeIndex: 0,

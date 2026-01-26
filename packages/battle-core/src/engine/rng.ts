@@ -4,7 +4,7 @@ import { RngEventType } from '../types/event';
 /**
  * ダメージ乱数をロール（85-100）
  *
- * - live mode: 固定100を返す（TODO: 将来的には実際の乱数生成）
+ * - live mode: 固定100を返す（TODO(rng): 将来的には実際の乱数生成）
  * - replay mode: RngEventログから消費
  *
  * @param ctx RNG Context
@@ -41,7 +41,7 @@ export function rollDamage(ctx: RngContext): number {
 /**
  * 命中乱数をロール（1-100）
  *
- * - live mode: 固定100を返す（TODO: 将来的には実際の乱数生成）
+ * - live mode: 固定100を返す（TODO(accuracy): accuracy<100の技を追加する際は固定値を1に変更。現状は100なのでaccuracy=100の技のみ必中）
  * - replay mode: RngEventログから消費
  *
  * @param ctx RNG Context
@@ -49,7 +49,7 @@ export function rollDamage(ctx: RngContext): number {
  */
 export function rollAccuracy(ctx: RngContext): number {
   if (ctx.mode === 'live') {
-    // 固定100（最小実装: 必中）
+    // 固定100（現状: tackle (accuracy=100) のみ対応）
     const value = 100;
 
     // RngEvent を記録
