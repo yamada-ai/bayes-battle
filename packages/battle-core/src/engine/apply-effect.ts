@@ -5,12 +5,12 @@ import { PublicEventType, type PublicEvent } from '../types/event';
 import type { BattleState } from '../types/battle-state';
 import type { RngContext } from '../types/rng-context';
 import { calculateDamage } from '../damage/calculator';
-import { rollDamage } from './rng';
+import { rollDamage, rollAccuracy } from './rng';
 
 /**
  * 技データ取得（最小実装: ハードコード）
  *
- * TODO: 将来的には state.moveDatabase から取得
+ * TODO(movedb): 将来的には state.moveDatabase から取得
  */
 function getMoveData(moveId: string): Move | null {
   // 最小実装: tackle のみサポート
@@ -76,7 +76,7 @@ export function applyEffect(
       }
 
       // 対象決定（最小実装: 2体戦のみ対応、単体1体、相手固定）
-      // TODO: 将来的には move.target と場の状況から対象を決定
+      // TODO(targeting): 将来的には move.target と場の状況から対象を決定
       // 制約: PokemonId は 0 と 1 のみを想定
       const targetId = effect.pokemon === 0 ? 1 : 0;
       const defender = state.pokemon[targetId];
@@ -84,6 +84,22 @@ export function applyEffect(
       if (!defender || defender.hp === 0) {
         // 対象が存在しない or 瀕死ならスキップ
         break;
+      }
+
+      // 命中判定（accuracy が null の場合は必中技）
+      if (move.accuracy !== null) {
+        const accuracyRoll = rollAccuracy(ctx);
+        const hits = accuracyRoll <= move.accuracy;
+
+        if (!hits) {
+          // 外れた場合
+          events.push({
+            type: PublicEventType.MOVE_MISSED,
+            pokemon: effect.pokemon,
+            moveId: effect.moveId,
+          });
+          break;
+        }
       }
 
       // ダメージ技の場合
