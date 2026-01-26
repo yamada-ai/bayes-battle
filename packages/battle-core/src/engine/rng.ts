@@ -37,3 +37,40 @@ export function rollDamage(ctx: RngContext): number {
     return event.value;
   }
 }
+
+/**
+ * 命中乱数をロール（1-100）
+ *
+ * - live mode: 固定100を返す（TODO: 将来的には実際の乱数生成）
+ * - replay mode: RngEventログから消費
+ *
+ * @param ctx RNG Context
+ * @returns 命中乱数（1-100）
+ */
+export function rollAccuracy(ctx: RngContext): number {
+  if (ctx.mode === 'live') {
+    // 固定100（最小実装: 必中）
+    const value = 100;
+
+    // RngEvent を記録
+    ctx.rngEvents.push({
+      type: RngEventType.RNG_ROLL,
+      purpose: 'accuracyRoll',
+      value,
+    });
+
+    return value;
+  } else {
+    // replay mode: RngEvent から消費
+    const event = ctx.rngEvents[ctx.consumeIndex];
+
+    if (!event || event.type !== RngEventType.RNG_ROLL || event.purpose !== 'accuracyRoll') {
+      throw new Error(
+        `RNG replay error: expected accuracyRoll at index ${ctx.consumeIndex}, got ${event?.purpose || 'none'}`
+      );
+    }
+
+    ctx.consumeIndex++;
+    return event.value;
+  }
+}

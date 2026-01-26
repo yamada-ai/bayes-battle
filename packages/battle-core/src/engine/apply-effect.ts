@@ -5,7 +5,7 @@ import { PublicEventType, type PublicEvent } from '../types/event';
 import type { BattleState } from '../types/battle-state';
 import type { RngContext } from '../types/rng-context';
 import { calculateDamage } from '../damage/calculator';
-import { rollDamage } from './rng';
+import { rollDamage, rollAccuracy } from './rng';
 
 /**
  * 技データ取得（最小実装: ハードコード）
@@ -83,6 +83,20 @@ export function applyEffect(
 
       if (!defender || defender.hp === 0) {
         // 対象が存在しない or 瀕死ならスキップ
+        break;
+      }
+
+      // 命中判定（RNG記録）
+      const accuracyRoll = rollAccuracy(ctx);
+      const hits = accuracyRoll <= move.accuracy;
+
+      if (!hits) {
+        // 外れた場合
+        events.push({
+          type: PublicEventType.MOVE_MISSED,
+          pokemon: effect.pokemon,
+          moveId: effect.moveId,
+        });
         break;
       }
 

@@ -4,6 +4,7 @@ import type { PokemonId } from './effect';
 export const PublicEventType = {
   TURN_START: 'TURN_START',
   USE_MOVE: 'USE_MOVE',
+  MOVE_MISSED: 'MOVE_MISSED',
   DAMAGE_DEALT: 'DAMAGE_DEALT',
   HEALED: 'HEALED',
   STATUS_INFLICTED: 'STATUS_INFLICTED',
@@ -31,6 +32,11 @@ export type PublicEvent =
     }
   | {
       type: typeof PublicEventType.USE_MOVE;
+      pokemon: PokemonId;
+      moveId: string;
+    }
+  | {
+      type: typeof PublicEventType.MOVE_MISSED;
       pokemon: PokemonId;
       moveId: string;
     }
@@ -78,7 +84,9 @@ export type PublicEvent =
 /**
  * RngEvent: 乱数結果（Replay用）
  */
-export type RngEvent = { type: typeof RngEventType.RNG_ROLL; purpose: 'damageRoll'; value: number }; // 85-100 (int)
+export type RngEvent =
+  | { type: typeof RngEventType.RNG_ROLL; purpose: 'damageRoll'; value: number } // 85-100 (int)
+  | { type: typeof RngEventType.RNG_ROLL; purpose: 'accuracyRoll'; value: number }; // 1-100 (int)
 
 // 将来の拡張用（コメントアウト）
 // | { type: 'RNG_ROLL'; purpose: 'accuracy'; value: number }     // 0.0-1.0 (float)

@@ -3,11 +3,11 @@ import { runQueue } from '../src/engine/effect-queue';
 import type { BattleState } from '../src/types/battle-state';
 import type { Pokemon } from '../src/types/state';
 import { EffectType, type Effect } from '../src/types/effect';
-import { RngEventType } from '../src/types/event';
+import { PublicEventType, RngEventType } from '../src/types/event';
 import type { RngContext } from '../src/types/rng-context';
 
-describe('RNG Recording (damageRoll)', () => {
-  it('USE_MOVE すると damageRoll の RngEvent が 1件出る', () => {
+describe('Accuracy Check', () => {
+  it('命中時: accuracyRoll の RngEvent が記録される', () => {
     // テスト用のポケモン（2体）
     const pokemon1: Pokemon = {
       id: 0,
@@ -90,7 +90,7 @@ describe('RNG Recording (damageRoll)', () => {
     // runQueue を実行
     const result = runQueue(initialEffects, state);
 
-    // RngEvent を確認: accuracyRoll + damageRoll = 2件
+    // RngEvent を確認: accuracyRoll と damageRoll の2件
     expect(result.rngEvents).toHaveLength(2);
     expect(result.rngEvents[0]).toMatchObject({
       type: RngEventType.RNG_ROLL,
@@ -100,11 +100,23 @@ describe('RNG Recording (damageRoll)', () => {
     expect(result.rngEvents[1]).toMatchObject({
       type: RngEventType.RNG_ROLL,
       purpose: 'damageRoll',
-      value: 100, // 固定値
+      value: 100,
+    });
+
+    // イベント確認: USE_MOVE → DAMAGE_DEALT（MOVE_MISSEDは出ない）
+    expect(result.events).toHaveLength(2);
+    expect(result.events[0]).toMatchObject({
+      type: PublicEventType.USE_MOVE,
+      pokemon: 0,
+      moveId: 'tackle',
+    });
+    expect(result.events[1]).toMatchObject({
+      type: PublicEventType.DAMAGE_DEALT,
+      target: 1,
     });
   });
 
-  it('複数の USE_MOVE で複数の damageRoll が記録される', () => {
+  it('外れ時: MOVE_MISSED イベントが出る（damageRollなし）', () => {
     // テスト用のポケモン（2体）
     const pokemon1: Pokemon = {
       id: 0,
@@ -163,7 +175,7 @@ describe('RNG Recording (damageRoll)', () => {
       types: ['normal'],
       ability: 'test',
       item: null,
-      moves: ['tackle'],
+      moves: [],
     };
 
     const state: BattleState = {
@@ -174,7 +186,21 @@ describe('RNG Recording (damageRoll)', () => {
       turnNumber: 0,
     };
 
-    // 初期Effect: 2つの USE_MOVE
+    // カスタムRngContext: accuracyRollを50に設定（tackleのaccuracy=100なので命中）
+    // 外れさせるには accuracyRoll > move.accuracy にする必要がある
+    const customRngContext: RngContext = {
+      mode: 'replay',
+      rngEvents: [
+        {
+          type: RngEventType.RNG_ROLL,
+          purpose: 'accuracyRoll',
+          value: 101, // 100を超えるので外れる
+        },
+      ],
+      consumeIndex: 0,
+    };
+
+    // 初期Effect: USE_MOVE (tackle)
     const initialEffects: Effect[] = [
       {
         type: EffectType.USE_MOVE,
@@ -182,42 +208,29 @@ describe('RNG Recording (damageRoll)', () => {
         pokemon: 0,
         moveId: 'tackle',
       },
-      {
-        type: EffectType.USE_MOVE,
-        id: 'use-move-2',
-        pokemon: 1,
-        moveId: 'tackle',
-      },
     ];
 
-    // runQueue を実行
-    const result = runQueue(initialEffects, state);
+    // runQueue を実行（replayモード）
+    const result = runQueue(initialEffects, state, customRngContext);
 
-    // RngEvent を確認: 各USE_MOVEにつき accuracyRoll + damageRoll = 4件
-    expect(result.rngEvents).toHaveLength(4);
-    expect(result.rngEvents[0]).toMatchObject({
-      type: RngEventType.RNG_ROLL,
-      purpose: 'accuracyRoll',
-      value: 100,
+    // イベント確認: USE_MOVE → MOVE_MISSED（DAMAGE_DEALTは出ない）
+    expect(result.events).toHaveLength(2);
+    expect(result.events[0]).toMatchObject({
+      type: PublicEventType.USE_MOVE,
+      pokemon: 0,
+      moveId: 'tackle',
     });
-    expect(result.rngEvents[1]).toMatchObject({
-      type: RngEventType.RNG_ROLL,
-      purpose: 'damageRoll',
-      value: 100,
+    expect(result.events[1]).toMatchObject({
+      type: PublicEventType.MOVE_MISSED,
+      pokemon: 0,
+      moveId: 'tackle',
     });
-    expect(result.rngEvents[2]).toMatchObject({
-      type: RngEventType.RNG_ROLL,
-      purpose: 'accuracyRoll',
-      value: 100,
-    });
-    expect(result.rngEvents[3]).toMatchObject({
-      type: RngEventType.RNG_ROLL,
-      purpose: 'damageRoll',
-      value: 100,
-    });
+
+    // damageRollは呼ばれないのでRngEventは1件のみ
+    expect(customRngContext.consumeIndex).toBe(1);
   });
 
-  it('Replay実行で state が一致する（damageRollがログから消費される）', () => {
+  it('Replay実行で state が一致する（命中パターン）', () => {
     // テスト用のポケモン（2体）
     const pokemon1: Pokemon = {
       id: 0,
@@ -276,7 +289,7 @@ describe('RNG Recording (damageRoll)', () => {
       types: ['normal'],
       ability: 'test',
       item: null,
-      moves: ['tackle'],
+      moves: [],
     };
 
     const state1: BattleState = {
@@ -300,9 +313,9 @@ describe('RNG Recording (damageRoll)', () => {
     // 1回目: Live実行
     const result1 = runQueue(initialEffects, state1);
 
-    // RngEventを記録: accuracyRoll + damageRoll = 2件
+    // RngEventを記録
     const rngEvents = result1.rngEvents;
-    expect(rngEvents).toHaveLength(2);
+    expect(rngEvents).toHaveLength(2); // accuracyRoll + damageRoll
 
     // 2回目: Replay実行（同じ初期状態）
     const state2: BattleState = {
