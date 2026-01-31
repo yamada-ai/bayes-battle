@@ -1,4 +1,4 @@
-import type { Pokemon, Move } from '../types/state';
+import type { Pokemon } from '../types/state';
 import { EffectType, type Effect } from '../types/effect';
 import type { ApplyResult } from '../types/apply-result';
 import { PublicEventType, type PublicEvent } from '../types/event';
@@ -6,32 +6,7 @@ import type { BattleState } from '../types/battle-state';
 import type { RngContext } from '../types/rng-context';
 import { calculateDamage } from '../damage/calculator';
 import { rollDamage, rollAccuracy, rollCritical } from './rng';
-
-/**
- * 技データ取得（最小実装: ハードコード）
- *
- * TODO(movedb): 将来的には state.moveDatabase から取得
- */
-function getMoveData(moveId: string): Move | null {
-  // 最小実装: tackle のみサポート
-  if (moveId === 'tackle') {
-    return {
-      id: 'tackle',
-      name: 'たいあたり',
-      type: 'normal',
-      category: 'physical',
-      power: 40,
-      accuracy: 100,
-      priority: 0,
-      pp: 35,
-      target: 'normal',
-      makesContact: true,
-    };
-  }
-
-  // 未実装の技
-  return null;
-}
+import { getMoveData } from '../data/move-db';
 
 /**
  * applyEffect: Effect を適用して State を更新する
