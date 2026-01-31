@@ -120,3 +120,49 @@ export function rollCritical(ctx: RngContext): number {
     return event.value;
   }
 }
+
+/**
+ * 同速時の乱数をロール（0 or 1）
+ *
+ * - live mode: 固定0を返す（TODO(speed): 実際の乱数生成に切り替え。現状は固定でpokemon0が先）
+ * - replay mode: RngEventログから消費（範囲チェックあり）
+ *
+ * Gen4の同速判定: 50/50でどちらが先に動くか決定
+ *
+ * @param ctx RNG Context
+ * @returns 同速乱数（0 or 1）
+ */
+export function rollSpeedTie(ctx: RngContext): number {
+  if (ctx.mode === 'live') {
+    // 固定0（現状: pokemon0が常に先）
+    const value = 0;
+
+    // RngEvent を記録
+    ctx.rngEvents.push({
+      type: RngEventType.RNG_ROLL,
+      purpose: 'speedTie',
+      value,
+    });
+
+    return value;
+  } else {
+    // replay mode: RngEvent から消費
+    const event = ctx.rngEvents[ctx.consumeIndex];
+
+    if (!event || event.type !== RngEventType.RNG_ROLL || event.purpose !== 'speedTie') {
+      throw new Error(
+        `RNG replay error: expected speedTie at index ${ctx.consumeIndex}, got ${event?.purpose || 'none'}`
+      );
+    }
+
+    // 範囲チェック（0 or 1）
+    if (event.value !== 0 && event.value !== 1) {
+      throw new Error(
+        `RNG replay error: speedTie value must be 0 or 1: ${event.value} at index ${ctx.consumeIndex}`
+      );
+    }
+
+    ctx.consumeIndex++;
+    return event.value;
+  }
+}

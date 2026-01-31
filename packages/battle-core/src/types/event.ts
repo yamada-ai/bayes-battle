@@ -92,7 +92,8 @@ export type PublicEvent =
 export type RngEvent =
   | { type: typeof RngEventType.RNG_ROLL; purpose: 'damageRoll'; value: number } // 85-100 (int)
   | { type: typeof RngEventType.RNG_ROLL; purpose: 'accuracyRoll'; value: number } // 1-100 (int)
-  | { type: typeof RngEventType.RNG_ROLL; purpose: 'criticalRoll'; value: number }; // 1-16 (int)
+  | { type: typeof RngEventType.RNG_ROLL; purpose: 'criticalRoll'; value: number } // 1-16 (int)
+  | { type: typeof RngEventType.RNG_ROLL; purpose: 'speedTie'; value: number }; // 0 or 1
 
 // 将来の拡張用（コメントアウト）
 // | { type: 'RNG_ROLL'; purpose: 'accuracy'; value: number }     // 0.0-1.0 (float)
