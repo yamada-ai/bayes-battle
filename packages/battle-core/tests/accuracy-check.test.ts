@@ -90,14 +90,19 @@ describe('Accuracy Check', () => {
     // runQueue を実行
     const result = runQueue(initialEffects, state);
 
-    // RngEvent を確認: accuracyRoll と damageRoll の2件
-    expect(result.rngEvents).toHaveLength(2);
+    // RngEvent を確認: accuracyRoll + criticalRoll + damageRoll の3件
+    expect(result.rngEvents).toHaveLength(3);
     expect(result.rngEvents[0]).toMatchObject({
       type: RngEventType.RNG_ROLL,
       purpose: 'accuracyRoll',
       value: 100, // 固定値
     });
     expect(result.rngEvents[1]).toMatchObject({
+      type: RngEventType.RNG_ROLL,
+      purpose: 'criticalRoll',
+      value: 16, // 固定値（急所なし）
+    });
+    expect(result.rngEvents[2]).toMatchObject({
       type: RngEventType.RNG_ROLL,
       purpose: 'damageRoll',
       value: 100,
@@ -316,7 +321,7 @@ describe('Accuracy Check', () => {
 
     // RngEventを記録
     const rngEvents = result1.rngEvents;
-    expect(rngEvents).toHaveLength(2); // accuracyRoll + damageRoll
+    expect(rngEvents).toHaveLength(3); // accuracyRoll + criticalRoll + damageRoll
 
     // 2回目: Replay実行（同じ初期状態）
     const state2: BattleState = {
@@ -343,7 +348,7 @@ describe('Accuracy Check', () => {
     // イベントが一致することを確認
     expect(result1.events).toEqual(result2.events);
 
-    // RNG consumeIndex が2つ消費されていることを確認
-    expect(replayContext.consumeIndex).toBe(2);
+    // RNG consumeIndex が3つ消費されていることを確認
+    expect(replayContext.consumeIndex).toBe(3);
   });
 });

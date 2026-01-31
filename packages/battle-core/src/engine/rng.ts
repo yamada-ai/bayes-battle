@@ -74,3 +74,42 @@ export function rollAccuracy(ctx: RngContext): number {
     return event.value;
   }
 }
+
+/**
+ * 急所乱数をロール（1-16）
+ *
+ * - live mode: 固定16を返す（TODO(critical): 急所を発生させる場合は実際の乱数生成。現状は16なので急所なし）
+ * - replay mode: RngEventログから消費
+ *
+ * Gen4の急所率: 1/16 (急所ランク0)
+ *
+ * @param ctx RNG Context
+ * @returns 急所乱数（1-16、1なら急所）
+ */
+export function rollCritical(ctx: RngContext): number {
+  if (ctx.mode === 'live') {
+    // 固定16（現状: 急所なし）
+    const value = 16;
+
+    // RngEvent を記録
+    ctx.rngEvents.push({
+      type: RngEventType.RNG_ROLL,
+      purpose: 'criticalRoll',
+      value,
+    });
+
+    return value;
+  } else {
+    // replay mode: RngEvent から消費
+    const event = ctx.rngEvents[ctx.consumeIndex];
+
+    if (!event || event.type !== RngEventType.RNG_ROLL || event.purpose !== 'criticalRoll') {
+      throw new Error(
+        `RNG replay error: expected criticalRoll at index ${ctx.consumeIndex}, got ${event?.purpose || 'none'}`
+      );
+    }
+
+    ctx.consumeIndex++;
+    return event.value;
+  }
+}

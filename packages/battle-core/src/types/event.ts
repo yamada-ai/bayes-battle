@@ -5,6 +5,7 @@ export const PublicEventType = {
   TURN_START: 'TURN_START',
   USE_MOVE: 'USE_MOVE',
   MOVE_MISSED: 'MOVE_MISSED',
+  CRITICAL_HIT: 'CRITICAL_HIT',
   DAMAGE_DEALT: 'DAMAGE_DEALT',
   HEALED: 'HEALED',
   STATUS_INFLICTED: 'STATUS_INFLICTED',
@@ -39,6 +40,10 @@ export type PublicEvent =
       type: typeof PublicEventType.MOVE_MISSED;
       pokemon: PokemonId;
       moveId: string;
+    }
+  | {
+      type: typeof PublicEventType.CRITICAL_HIT;
+      pokemon: PokemonId;
     }
 
   // === ダメージ・回復 ===
@@ -86,7 +91,8 @@ export type PublicEvent =
  */
 export type RngEvent =
   | { type: typeof RngEventType.RNG_ROLL; purpose: 'damageRoll'; value: number } // 85-100 (int)
-  | { type: typeof RngEventType.RNG_ROLL; purpose: 'accuracyRoll'; value: number }; // 1-100 (int)
+  | { type: typeof RngEventType.RNG_ROLL; purpose: 'accuracyRoll'; value: number } // 1-100 (int)
+  | { type: typeof RngEventType.RNG_ROLL; purpose: 'criticalRoll'; value: number }; // 1-16 (int)
 
 // 将来の拡張用（コメントアウト）
 // | { type: 'RNG_ROLL'; purpose: 'accuracy'; value: number }     // 0.0-1.0 (float)
