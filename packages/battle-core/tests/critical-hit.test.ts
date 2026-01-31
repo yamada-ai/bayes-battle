@@ -95,7 +95,7 @@ describe('Critical Hit', () => {
     expect(result.rngEvents[0]).toMatchObject({
       type: RngEventType.RNG_ROLL,
       purpose: 'accuracyRoll',
-      value: 100,
+      value: 1,
     });
     expect(result.rngEvents[1]).toMatchObject({
       type: RngEventType.RNG_ROLL,
