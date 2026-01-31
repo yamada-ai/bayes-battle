@@ -5,7 +5,7 @@ import { PublicEventType, type PublicEvent } from '../types/event';
 import type { BattleState } from '../types/battle-state';
 import type { RngContext } from '../types/rng-context';
 import { calculateDamage } from '../damage/calculator';
-import { rollDamage, rollAccuracy } from './rng';
+import { rollDamage, rollAccuracy, rollCritical } from './rng';
 
 /**
  * 技データ取得（最小実装: ハードコード）
@@ -104,15 +104,27 @@ export function applyEffect(
 
       // ダメージ技の場合
       if (move.category !== 'status' && move.power !== null && move.power > 0) {
+        // 急所判定（RNG記録）
+        const criticalRoll = rollCritical(ctx);
+        const isCritical = criticalRoll === 1; // Gen4: 1/16 で急所
+
+        if (isCritical) {
+          // 急所イベント
+          events.push({
+            type: PublicEventType.CRITICAL_HIT,
+            pokemon: effect.pokemon,
+          });
+        }
+
         // ダメージ乱数をロール（RNG記録）
         const randomRoll = rollDamage(ctx);
 
-        // ダメージ計算（最小実装: 必中、急所なし）
+        // ダメージ計算
         const damage = calculateDamage({
           attacker: pokemon,
           defender,
           move,
-          isCritical: false,
+          isCritical,
           weather: null,
           randomRoll,
         });
