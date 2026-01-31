@@ -77,67 +77,100 @@ function executeActions(
   state: BattleState,
   ctx: RngContext
 ): { events: PublicEvent[]; rngEvents: RngEvent[] } {
-  // 行動順にソート（Gen4ルール: priority → speed → speedTie）
-  // speedTie は一度だけロールして結果をキャッシュ
-  const speedTieResults = new Map<string, number>();
+  // Step 1: 瀕死チェック & 技データ取得を含む前処理
+  const actionsWithData = turnPlan.actions.map((action) => {
+    const pokemon = state.pokemon[action.pokemon];
+    const isFainted = !pokemon || pokemon.hp === 0;
 
-  const sortedActions = [...turnPlan.actions].sort((a, b) => {
-    // 瀕死ポケモンは行動できない（末尾に）
-    const pokemonA = state.pokemon[a.pokemon];
-    const pokemonB = state.pokemon[b.pokemon];
-
-    if (!pokemonA || pokemonA.hp === 0) return 1;
-    if (!pokemonB || pokemonB.hp === 0) return -1;
-
-    // USE_MOVEのみソート対象（SWITCHは未実装）
-    if (a.type !== 'USE_MOVE' || b.type !== 'USE_MOVE') {
-      return 0;
-    }
-
-    // 1. priority（高い方が先）
-    const moveA = getMoveData(a.moveId);
-    const moveB = getMoveData(b.moveId);
-
-    const priorityA = moveA?.priority ?? 0;
-    const priorityB = moveB?.priority ?? 0;
-
-    if (priorityA !== priorityB) {
-      return priorityB - priorityA; // 高い方が先
-    }
-
-    // 2. speed（高い方が先）
-    const speedA = pokemonA.stats.speed;
-    const speedB = pokemonB.stats.speed;
-
-    if (speedA !== speedB) {
-      return speedB - speedA; // 高い方が先
-    }
-
-    // 3. speedTie（同速時の50/50）
-    // ペアごとにキャッシュして、同じペアで複数回呼ばれても1回だけロール
-    const pairKey = `${Math.min(a.pokemon, b.pokemon)}-${Math.max(a.pokemon, b.pokemon)}`;
-    let speedTieRoll = speedTieResults.get(pairKey);
-    if (speedTieRoll === undefined) {
-      speedTieRoll = rollSpeedTie(ctx);
-      speedTieResults.set(pairKey, speedTieRoll);
-    }
-
-    // speedTieRoll の解釈: 0 なら pokemon ID が小さい方が先、1 なら大きい方が先
-    if (speedTieRoll === 0) {
-      return a.pokemon - b.pokemon; // ID が小さい方が先
+    if (action.type === 'USE_MOVE') {
+      const move = getMoveData(action.moveId);
+      return {
+        action,
+        pokemon,
+        isFainted,
+        priority: move?.priority ?? 0,
+        speed: pokemon?.stats.speed ?? 0,
+      };
     } else {
-      return b.pokemon - a.pokemon; // ID が大きい方が先
+      // SWITCH（未実装）
+      return {
+        action,
+        pokemon,
+        isFainted,
+        priority: 0, // SWITCH の優先度（今回未実装）
+        speed: pokemon?.stats.speed ?? 0,
+      };
     }
   });
 
+  // Step 2: priority → speed → pokemon.id で決定的にソート
+  actionsWithData.sort((a, b) => {
+    // 瀕死は末尾
+    if (a.isFainted && !b.isFainted) return 1;
+    if (!a.isFainted && b.isFainted) return -1;
+    if (a.isFainted && b.isFainted) return 0;
+
+    // priority（高い方が先）
+    if (a.priority !== b.priority) {
+      return b.priority - a.priority;
+    }
+
+    // speed（高い方が先）
+    if (a.speed !== b.speed) {
+      return b.speed - a.speed;
+    }
+
+    // pokemon.id（小さい方が先、決定的なソート）
+    return a.action.pokemon - b.action.pokemon;
+  });
+
+  // Step 3: 同速グループを特定して speedTie で順序を決定
+  let i = 0;
+  while (i < actionsWithData.length) {
+    const groupStart = i;
+    const current = actionsWithData[i];
+
+    // 瀕死は処理しない
+    if (current.isFainted) {
+      break;
+    }
+
+    // 同じ priority & speed のグループを見つける
+    let groupEnd = i + 1;
+    while (
+      groupEnd < actionsWithData.length &&
+      !actionsWithData[groupEnd].isFainted &&
+      actionsWithData[groupEnd].priority === current.priority &&
+      actionsWithData[groupEnd].speed === current.speed
+    ) {
+      groupEnd++;
+    }
+
+    const groupSize = groupEnd - groupStart;
+
+    // グループサイズが2以上なら speedTie をロール
+    if (groupSize >= 2) {
+      const speedTieRoll = rollSpeedTie(ctx);
+
+      // speedTieRoll = 0: ID昇順（元のまま）
+      // speedTieRoll = 1: ID降順（逆転）
+      if (speedTieRoll === 1) {
+        // グループ内を逆順にする
+        const group = actionsWithData.slice(groupStart, groupEnd);
+        group.reverse();
+        actionsWithData.splice(groupStart, groupSize, ...group);
+      }
+    }
+
+    i = groupEnd;
+  }
+
+  // Step 4: ソート済みの actions から USE_MOVE Effect を生成
   const effects: Effect[] = [];
 
-  // ソート済みの actions から USE_MOVE Effect を生成
-  for (const action of sortedActions) {
-    const pokemon = state.pokemon[action.pokemon];
-
+  for (const { action, isFainted } of actionsWithData) {
     // 瀕死ポケモンはスキップ
-    if (!pokemon || pokemon.hp === 0) {
+    if (isFainted) {
       continue;
     }
 
