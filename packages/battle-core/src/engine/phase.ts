@@ -1,5 +1,5 @@
 import type { BattleState } from '../types/battle-state';
-import type { TurnPlan, PlayerAction } from '../types/turn-plan';
+import type { TurnPlan } from '../types/turn-plan';
 import type { Effect } from '../types/effect';
 import { EffectType } from '../types/effect';
 import type { PublicEvent, RngEvent } from '../types/event';
