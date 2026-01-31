@@ -42,11 +42,11 @@ export function applyEffect(
         moveId: effect.moveId,
       });
 
-      // 技データ取得（最小実装: tackle のみハードコード）
+      // 技データ取得（MoveDBから取得）
       const move = getMoveData(effect.moveId);
 
       if (!move) {
-        // 未実装の技
+        // MoveDBに未登録の技
         break;
       }
 
