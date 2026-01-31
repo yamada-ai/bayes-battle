@@ -5,9 +5,9 @@ import { EffectType } from '../types/effect';
 import type { PublicEvent, RngEvent } from '../types/event';
 import { PublicEventType } from '../types/event';
 import type { RngContext } from '../types/rng-context';
-import type { Move } from '../types/state';
 import { runQueue } from './effect-queue';
 import { rollSpeedTie } from './rng';
+import { getMoveData } from '../data/move-db';
 
 /**
  * executeTurn の結果
@@ -15,32 +15,6 @@ import { rollSpeedTie } from './rng';
 export interface ExecuteTurnResult {
   events: PublicEvent[];
   rngEvents: RngEvent[];
-}
-
-/**
- * 技データ取得（最小実装: ハードコード）
- *
- * TODO(movedb): 将来的には state.moveDatabase から取得
- */
-function getMoveData(moveId: string): Move | null {
-  // 最小実装: tackle のみサポート
-  if (moveId === 'tackle') {
-    return {
-      id: 'tackle',
-      name: 'たいあたり',
-      type: 'normal',
-      category: 'physical',
-      power: 40,
-      accuracy: 100,
-      priority: 0,
-      pp: 35,
-      target: 'normal',
-      makesContact: true,
-    };
-  }
-
-  // 未実装の技
-  return null;
 }
 
 /**
