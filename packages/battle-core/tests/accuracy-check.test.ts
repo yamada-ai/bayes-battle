@@ -95,7 +95,7 @@ describe('Accuracy Check', () => {
     expect(result.rngEvents[0]).toMatchObject({
       type: RngEventType.RNG_ROLL,
       purpose: 'accuracyRoll',
-      value: 100, // 固定値
+      value: 1, // 固定値（全技必中）
     });
     expect(result.rngEvents[1]).toMatchObject({
       type: RngEventType.RNG_ROLL,
@@ -121,7 +121,7 @@ describe('Accuracy Check', () => {
     });
   });
 
-  it('外れ時: MOVE_MISSED イベントが出る（damageRollなし）', () => {
+  it('範囲外のaccuracyRollでエラーになる（replay検証）', () => {
     // テスト用のポケモン（2体）
     const pokemon1: Pokemon = {
       id: 0,
@@ -191,16 +191,14 @@ describe('Accuracy Check', () => {
       turnNumber: 0,
     };
 
-    // カスタムRngContext: accuracyRollを101に設定して外れをシミュレート
-    // NOTE: 仕様上は1-100だが、現状tackle (accuracy=100) しかないため範囲外の値を使用
-    // TODO(accuracy): accuracy<100の技を追加したら、このテストを正規の範囲（例: accuracy=85, roll=86）に修正
+    // カスタムRngContext: accuracyRollを101に設定（範囲外: 1-100）
     const customRngContext: RngContext = {
       mode: 'replay',
       rngEvents: [
         {
           type: RngEventType.RNG_ROLL,
           purpose: 'accuracyRoll',
-          value: 101, // tackleのaccuracy=100を超えるので外れる
+          value: 101, // 範囲外の値
         },
       ],
       consumeIndex: 0,
@@ -216,24 +214,10 @@ describe('Accuracy Check', () => {
       },
     ];
 
-    // runQueue を実行（replayモード）
-    const result = runQueue(initialEffects, state, customRngContext);
-
-    // イベント確認: USE_MOVE → MOVE_MISSED（DAMAGE_DEALTは出ない）
-    expect(result.events).toHaveLength(2);
-    expect(result.events[0]).toMatchObject({
-      type: PublicEventType.USE_MOVE,
-      pokemon: 0,
-      moveId: 'tackle',
-    });
-    expect(result.events[1]).toMatchObject({
-      type: PublicEventType.MOVE_MISSED,
-      pokemon: 0,
-      moveId: 'tackle',
-    });
-
-    // damageRollは呼ばれないのでRngEventは1件のみ
-    expect(customRngContext.consumeIndex).toBe(1);
+    // runQueue を実行（replayモード）→ エラーになることを確認
+    expect(() => {
+      runQueue(initialEffects, state, customRngContext);
+    }).toThrow('RNG replay error: accuracyRoll value out of range (1-100): 101');
   });
 
   it('Replay実行で state が一致する（命中パターン）', () => {

@@ -41,16 +41,16 @@ export function rollDamage(ctx: RngContext): number {
 /**
  * 命中乱数をロール（1-100）
  *
- * - live mode: 固定100を返す（TODO(accuracy): accuracy<100の技を追加する際は固定値を1に変更。現状は100なのでaccuracy=100の技のみ必中）
- * - replay mode: RngEventログから消費
+ * - live mode: 固定1を返す（TODO(accuracy): 実際の乱数生成に切り替え）
+ * - replay mode: RngEventログから消費（範囲チェックあり）
  *
  * @param ctx RNG Context
  * @returns 命中乱数（1-100）
  */
 export function rollAccuracy(ctx: RngContext): number {
   if (ctx.mode === 'live') {
-    // 固定100（現状: tackle (accuracy=100) のみ対応）
-    const value = 100;
+    // 固定1（全技必中）
+    const value = 1;
 
     // RngEvent を記録
     ctx.rngEvents.push({
@@ -67,6 +67,13 @@ export function rollAccuracy(ctx: RngContext): number {
     if (!event || event.type !== RngEventType.RNG_ROLL || event.purpose !== 'accuracyRoll') {
       throw new Error(
         `RNG replay error: expected accuracyRoll at index ${ctx.consumeIndex}, got ${event?.purpose || 'none'}`
+      );
+    }
+
+    // 範囲チェック（1-100）
+    if (event.value < 1 || event.value > 100) {
+      throw new Error(
+        `RNG replay error: accuracyRoll value out of range (1-100): ${event.value} at index ${ctx.consumeIndex}`
       );
     }
 

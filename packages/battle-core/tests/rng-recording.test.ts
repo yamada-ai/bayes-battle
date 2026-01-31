@@ -95,7 +95,7 @@ describe('RNG Recording (damageRoll)', () => {
     expect(result.rngEvents[0]).toMatchObject({
       type: RngEventType.RNG_ROLL,
       purpose: 'accuracyRoll',
-      value: 100, // 固定値
+      value: 1, // 固定値
     });
     expect(result.rngEvents[1]).toMatchObject({
       type: RngEventType.RNG_ROLL,
@@ -203,7 +203,7 @@ describe('RNG Recording (damageRoll)', () => {
     expect(result.rngEvents[0]).toMatchObject({
       type: RngEventType.RNG_ROLL,
       purpose: 'accuracyRoll',
-      value: 100,
+      value: 1,
     });
     expect(result.rngEvents[1]).toMatchObject({
       type: RngEventType.RNG_ROLL,
@@ -218,7 +218,7 @@ describe('RNG Recording (damageRoll)', () => {
     expect(result.rngEvents[3]).toMatchObject({
       type: RngEventType.RNG_ROLL,
       purpose: 'accuracyRoll',
-      value: 100,
+      value: 1,
     });
     expect(result.rngEvents[4]).toMatchObject({
       type: RngEventType.RNG_ROLL,
